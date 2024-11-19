@@ -1,0 +1,37 @@
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+
+
+
+export interface EntityItem{
+  text:string,
+  label:string|undefined
+}
+
+export interface entityState{
+  entitiesSelected:EntityItem[]
+  entities:EntityItem[]
+}
+const initialState:entityState={
+  entitiesSelected:[],
+  entities:[]
+}
+export const entitySlice=createSlice({
+  name:'entity',
+  initialState,
+  reducers:{
+
+    addEntity:(state,action:PayloadAction<EntityItem>)=>{
+      console.log(action)
+      state.entitiesSelected.push(action.payload)
+    },
+    removeEntity:(state,action:PayloadAction<string>)=>{
+      state.entitiesSelected=state.entitiesSelected.filter((item)=>(item.text!==action.payload))
+    },
+    
+  }
+
+})
+export const {addEntity,removeEntity}=entitySlice.actions
+
+export default entitySlice.reducer
