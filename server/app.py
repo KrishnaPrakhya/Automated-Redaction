@@ -85,7 +85,9 @@ def redactEntity():
     pdf_content = pdf_file.read()
     with fitz.open(stream=pdf_content, filetype="pdf") as doc:
         for page in doc:
-            for word in entities_list:
+            for word, entity in zip(entities_list, entities_categories_list):
+                # print(word)
+                # print(entity)
                 areas = page.search_for(word)
                 for area in areas:
                     if redact_type == "BlackOut":
@@ -95,6 +97,10 @@ def redactEntity():
                     elif redact_type == "Blurring":
                         page.add_redact_annot(area, fill=(1, 1, 0))
                     elif redact_type=="CategoryReplacement":
+                        font_size = (area[3]-area[1])*0.6
+                        print(font_size)
+                        annot = page.add_redact_annot(area, text = entity, text_color = fitz.utils.getColor("black"), fontsize = font_size)
+                        annot.update()
                         print("Level2")
                         print("hnfdn")
                     elif redact_type=="SyntheticReplacement":
