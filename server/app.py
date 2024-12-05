@@ -22,6 +22,12 @@ labels = [
     "name",
     "DATE",
     "age",
+    "number",
+    "gmail",
+    "city",
+    "place",
+    "occupation",
+    "language",
     "ACCOUNT INFORMATION",
     "TRANSACTION DETAILS",
     "INVESTMENT DETAILS",
@@ -73,7 +79,9 @@ def redactEntity():
         return jsonify({"error": "Invalid JSON for entities"}), 400
     
     redact_type=request.args.get('type')
+    
     print(redact_type)
+
     entities_categories_list=[]
     entities_list=[]
     print(entities)
@@ -83,7 +91,9 @@ def redactEntity():
     print(entities_list)
     print(entities_categories_list)
     pdf_content = pdf_file.read()
+    
     with fitz.open(stream=pdf_content, filetype="pdf") as doc:
+        rect_area=[]
         for page in doc:
             for word in entities_list:
                 areas = page.search_for(word)
@@ -95,12 +105,15 @@ def redactEntity():
                     elif redact_type == "Blurring":
                         page.add_redact_annot(area, fill=(1, 1, 0))
                     elif redact_type=="CategoryReplacement":
-                        print("Level2")
-                        print("hnfdn")
+                        page.add_redact_annot(area,fill=(1,1,1))
+                        x, y, x2, y2 = area
+                        rect_area.append((x + 4, y2 - 3)) 
                     elif redact_type=="SyntheticReplacement":
                         print("Level3")
-                        print("fdj")
             page.apply_redactions()
+        for area in rect_area:
+            doc[0].insert_text(area, "Teacher", fontsize=10, color=(0, 0, 0), overlay=True)  
+
         redacted_file = f"new2.pdf"
         doc.save(redacted_file) 
 
