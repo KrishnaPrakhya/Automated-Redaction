@@ -125,6 +125,9 @@ const Page = (props: Props) => {
               style={{ maxWidth: "100%", maxHeight: "300px" }}
             />
             <a
+              onClick={() => {
+                alert("The download will be redirected");
+              }}
               href={`${redactedImage}`}
               download="redacted_image.jpg"
               style={{
