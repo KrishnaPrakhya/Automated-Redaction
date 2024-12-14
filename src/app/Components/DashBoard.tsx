@@ -70,7 +70,6 @@ function DashBoard(props: Props) {
 
   return (
     <div className="h-screen w-screen flex justify-center items-center">
-
       <div
         className={`flex w-full ${
           showConfigs ? "justify-between" : "justify-center"
@@ -99,7 +98,7 @@ function DashBoard(props: Props) {
           ) : (
             <h1>File Uploaded!</h1>
           )}
-          <Button onClick={handleFileUpload}>Flask ni gelukufy</Button>
+          <Button onClick={handleFileUpload}>Handle Flask</Button>
         </div>
         <div></div>
         {showConfigs && (
