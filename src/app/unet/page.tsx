@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
+import Image from "next/image";
 
 interface Props {}
 const Page = (props: Props) => {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [redactedImage, setRedactedImage] = useState(null);
+  const [redactedImage, setRedactedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,20 +34,21 @@ const Page = (props: Props) => {
     setError("");
 
     const formData = new FormData();
-    formData.append("file", image);
+    formData.append("image", image);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/redactImage",
-        formData,
+      const response = await fetch(
+        "https://afe9-34-145-120-41.ngrok-free.app/predict",
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          method: "POST",
+          body: formData,
         }
       );
-      console.log(response);
-      setRedactedImage(response.data.file_url);
+      const data = await response.json();
+      console.log(data);
+      const redactedImageUrl = `https://afe9-34-145-120-41.ngrok-free.app/${data?.redacted_image_path}`;
+      setRedactedImage(redactedImageUrl);
+      console.log(redactedImageUrl);
     } catch (err) {
       console.error(err);
       setError("Failed to redact the image. Please try again.");
@@ -54,7 +56,7 @@ const Page = (props: Props) => {
       setLoading(false);
     }
   };
-
+  console.log(redactedImage);
   return (
     <div
       style={{
@@ -119,10 +121,11 @@ const Page = (props: Props) => {
         {redactedImage && (
           <div className="">
             <h3 className="mb-5">Redacted Image</h3>
-            <img
+            <Image
               src={`${redactedImage}`}
               alt="Redacted"
-              style={{ maxWidth: "100%", maxHeight: "300px" }}
+              width={300}
+              height={500}
             />
             <a
               onClick={() => {
