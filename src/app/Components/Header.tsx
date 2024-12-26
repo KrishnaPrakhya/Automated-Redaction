@@ -7,10 +7,9 @@ function Header(props: Props) {
   return (
     <div>
       <nav className="flex justify-between p-4 items-center m-4">
-        <button>Home</button>
-        <button>About Us</button>
-        <button>PDF Redaction</button>
-        <button>Image Redaction</button>
+        <Link href={"/"}>Home</Link>
+        <Link href={"/about"}>About Us</Link>
+        <Link href={"/"}>Gradational Redaction</Link>
         <Link href={"/unet"}>Image Segmentation</Link>
       </nav>
     </div>

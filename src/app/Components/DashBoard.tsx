@@ -5,12 +5,15 @@ import RedactionConfig from "./RedactionConfig";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { Progress } from "@/components/ui/progress";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { setEntities } from "@/features/Options/OptionsSlice";
+import ImageRedaction from "./ImageRedaction";
+import Image from "next/image";
 interface Props {}
 
 function DashBoard(props: Props) {
   const {} = props;
+  const { imageUrl } = useSelector((state: RootState) => state.image);
   const [progress, setProgress] = useState(0);
   const [fileActive, setFileActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -18,6 +21,8 @@ function DashBoard(props: Props) {
   const [fileUrl, setFileUrl] = useState<null | string>("");
   const [fileObj, setFileObj] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfRedaction, setPdfRedaction] = useState<boolean | null>(null);
+  const [imageRedaction, setImageRedaction] = useState<boolean | null>(null);
   // const [entities, setEntities] = useState([]);
   const handleButtonClick = () => {
     if (fileInputRef.current) {
@@ -67,7 +72,7 @@ function DashBoard(props: Props) {
     }
   };
   const dispatch: AppDispatch = useDispatch();
-
+  console.log(imageUrl);
   return (
     <div className="h-screen w-screen flex justify-center items-center">
       <div
@@ -75,32 +80,50 @@ function DashBoard(props: Props) {
           showConfigs ? "justify-between" : "justify-center"
         } items-center gap-4 text-center`}
       >
-        {/* {fileUrl && <PDFComponent fileUrl={fileUrl} />} */}
-        <div className="flex flex-col items-center justify-center w-full ">
-          {!fileActive ? (
-            <div className="flex flex-col justify-center gap-4 items-center">
-              <input
-                type="file"
-                accept=".pdf, image/*"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-              <Button
-                onClick={handleButtonClick}
-                variant="secondary"
-                color="fill"
-              >
-                Click Here!
-              </Button>
-              <h3>Click Here To upload The file to be redacted!</h3>
-            </div>
-          ) : (
-            <h1>File Uploaded!</h1>
-          )}
-          <Button onClick={handleFileUpload}>Handle Flask</Button>
-        </div>
-        <div></div>
+        <Button
+          onClick={() => {
+            setPdfRedaction((prev) => (prev === null ? true : !prev));
+            setImageRedaction(false);
+          }}
+        >
+          PDF redaction
+        </Button>
+        <Button
+          onClick={() => {
+            setImageRedaction((prev) => (prev === null ? true : !prev));
+            setPdfRedaction(false);
+          }}
+        >
+          Image Redaction
+        </Button>
+        {pdfRedaction && (
+          <div className="flex flex-col items-center justify-center w-full ">
+            {!fileActive ? (
+              <div className="flex flex-col justify-center gap-4 items-center">
+                <input
+                  type="file"
+                  accept=".pdf, image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                <Button
+                  onClick={handleButtonClick}
+                  variant="secondary"
+                  color="fill"
+                >
+                  Click Here!
+                </Button>
+                <h3>Click Here To upload The file to be redacted!</h3>
+              </div>
+            ) : (
+              <h1>File Uploaded!</h1>
+            )}
+            <Button onClick={handleFileUpload}>Handle Flask</Button>
+            <div></div>
+          </div>
+        )}
+        {imageRedaction && <ImageRedaction />}
         {showConfigs && (
           <motion.div
             initial={{ opacity: 0 }}

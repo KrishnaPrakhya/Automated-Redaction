@@ -1,5 +1,5 @@
 from posixpath import dirname
-from flask import Flask,jsonify,request,json
+from flask import Flask,jsonify,request,json,send_from_directory,url_for
 from flask_cors import CORS
 import fitz  
 import re
@@ -11,20 +11,12 @@ from gliner.training import Trainer,TrainingArguments
 from gliner.data_processing.collator import DataCollatorWithPadding,DataCollator
 from gliner.utils import load_config_as_namespace
 from gliner.data_processing import WordsSplitter,GLiNERDataset
-from tensorflow.keras.models import load_model
-import tensorflow as tf
 import os
 import requests
 import cv2
 app=Flask(__name__)
 CORS(app)
-def dice_coefficient(y_true, y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    numerator = 2 * tf.reduce_sum(y_true * y_pred)
-    denominator = tf.reduce_sum(y_true + y_pred)
-    return numerator / (denominator + tf.keras.backend.epsilon())
-model_unet = load_model('./model_at_epoch_cheq.keras', custom_objects={'dice_coefficient': dice_coefficient}, compile=False)
+
 model = GLiNER.from_pretrained("urchade/gliner_small-v2.1")
 labels = [
     "Person",
@@ -54,6 +46,8 @@ labels = [
     "ATTENDANCE AND DISCIPLINE",
     "PROJECTS AND ASSIGNMENTS"
 ]
+UPLOAD_FOLDER = './uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @app.route('/api/data',methods=['GET'])
 def get_data():
   return jsonify({"message":"THis is a message"})
@@ -72,81 +66,82 @@ def upload_data():
 
 
 
-@app.route('https://8769-34-83-21-181.ngrok-free.app',methods=['POST'])
-def predict():
-    data = request.json
-    # Example: Assuming input image is sent as a list
-    input_image = np.array(data['image']).reshape(1, 512, 512, 1)
-    prediction = model.predict(input_image)
-    return jsonify({'prediction': prediction.tolist()})
+@app.route("/api/image",methods=["POST"])
+def imageRedaction():
+    import cv2
+    import pytesseract
+    from pytesseract import Output
+    if 'image' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
 
-
-@app.route('/api/unet', methods=['POST'])
-def unetModel():
-    import numpy as np
-
-    def load_image(paths):
-        original_sizes = []
-        image_list = np.zeros((len(paths), 512, 512, 1))
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path)
+    def detect_text_properties(image):
         
-        for i, fig in enumerate(paths):
-            image = cv2.imread(fig, 0)
-            h, w = image.shape
-            original_sizes.append((h, w))
-            
-            ratio = min(512 / w, 512 / h)
-            image = cv2.resize(image, (int(w * ratio), int(h * ratio)), interpolation=cv2.INTER_CUBIC)
-            img_h, img_w = image.shape
-            
-            pad_h = 512 - img_h
-            pad_w = 512 - img_w
-            pad_top = pad_h // 2
-            pad_bottom = pad_h - pad_top
-            pad_left = pad_w // 2
-            pad_right = pad_w - pad_left
-            image = np.pad(image, pad_width=((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=255)
-            
-            image = image / 255.0
-            image = image.reshape(512, 512, 1)
-            image_list[i] = image
+        data = pytesseract.image_to_data(image, output_type=Output.DICT)
+        text_info = []
         
-        return image_list, original_sizes
+        for i in range(len(data['text'])):
+            if data['text'][i].strip():  
+                x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+                text = data['text'][i]
+                font_size = h  
+                text_info.append({
+                    "text": text,
+                    "position": (x, y, w, h),
+                    "font_size": font_size
+                })
+        return text_info
+    def redact_text(image, text_info, redact_list, replacement_text="REDACTED"):
+        redacted_img = image.copy()
+        
+        for info in text_info:
+            x, y, w, h = info["position"]
+            text = info["text"]
+            font_size = info["font_size"]
+            
+            if text in redact_list:
+                cv2.rectangle(redacted_img, (x, y), (x+w, y+h), (1, 1, 1), -1)
+                
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = font_size / 30  
+                thickness = 1
+                
+                (text_width, text_height), baseline = cv2.getTextSize(replacement_text, font, font_scale, thickness)
+                
+                while text_width > w or text_height > h and font_scale>0.5:
+                    font_scale-=0.1
+                    (text_width, text_height), baseline = cv2.getTextSize(replacement_text, font, font_scale, thickness)
+                    
+                    
+                text_x = x + (w - text_width) // 2
+                text_y = y + (h + text_height) // 2 - baseline
+                
+                cv2.putText(redacted_img, replacement_text, (text_x, text_y), font, font_scale, (255, 255, 255), thickness)
+        
+        return redacted_img
+    print(f"uploads/{file.filename}")
+    processed_image=cv2.imread(f"uploads/{file.filename}")
+    
+    predicted_words_to_redact = ["Desktop","Laptop"]
 
-    try:
-        image_path ="./resme.jpeg"
-        if not image_path:
-            return jsonify({"error": "Image path not provided"}), 400
+    text_info = detect_text_properties(processed_image)
 
-        original_image = cv2.imread(image_path)
-        if original_image is None:
-            return jsonify({"error": "Invalid image path"}), 400
+    redacted_image = redact_text(processed_image, text_info, predicted_words_to_redact)
 
-        original_height, original_width = original_image.shape[:2]
-        img, _ = load_image([image_path])
-
-        predicted_mask = model_unet.predict(img).squeeze()  
-        binary_mask = (predicted_mask > 0.5).astype(np.uint8)
-
-        resized_mask = cv2.resize(binary_mask, (original_width, original_height), interpolation=cv2.INTER_LINEAR)
-
-        redacted_image = original_image.copy()
-        redacted_image[resized_mask == 1] = (0, 0, 0)  
-
-        output_dir = "output"
-        os.makedirs(output_dir, exist_ok=True)
-        redacted_image_path = os.path.join(output_dir, "redacted_image.jpg")
-        mask_path = os.path.join(output_dir, "mask.png")
-
-        cv2.imwrite(redacted_image_path, redacted_image)
-        cv2.imwrite(mask_path, resized_mask * 255) 
-
-        return jsonify({
+    output_dir="output"
+    cv2.imwrite(f"{output_dir}/redacted_image.jpg", redacted_image)
+    redacted_image_url = url_for("static", filename="output/redacted_image.jpg", _external=True)
+   
+    return jsonify({
             "message": "Redaction completed successfully",
-            "redacted_image_path": redacted_image_path,
-            "mask_path": mask_path
+            "redacted_image_path": redacted_image_url,
         }), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+
 
 
 @app.route('/api/redactEntity',methods=['POST'])
