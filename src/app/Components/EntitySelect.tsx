@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 import { motion } from "framer-motion";
 interface Props {
-  pdfFile: File | null;
+  File: File | null;
 }
 
 function EntitySelect(props: Props) {
@@ -14,20 +14,20 @@ function EntitySelect(props: Props) {
   const { entities, redactionType } = useSelector(
     (state: RootState) => state.options
   );
+  console.log(entities);
   const { progressNum } = useSelector(
     (state: RootState) => state.ProgressSlice
   );
   const { entitiesSelected } = useSelector((state: RootState) => state.entity);
-  const { pdfFile } = props;
+  const { File } = props;
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   const redactSelectedEntities = async () => {
     try {
       const formData = new FormData();
-      if (pdfFile) {
-        console.log(pdfFile);
-        formData.append("file", pdfFile);
+      if (File) {
+        formData.append("file", File);
       }
       formData.append("entities", JSON.stringify(entitiesSelected));
       const response = await fetch(
@@ -37,21 +37,28 @@ function EntitySelect(props: Props) {
           body: formData,
         }
       );
+
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+        if (data.redacted_file_url) {
+          console.log("Redacted image URL:", data.redacted_file_url);
+        } else if (data.output_file) {
+          console.log("Redacted PDF file:", data.output_file);
+        }
       }
     } catch (err) {
       console.log(err);
     }
   };
-
+  console.log(entitiesSelected);
   const handleItemClick = (entityText: string) => {
     setSelectedEntities((prev) =>
       prev.includes(entityText)
         ? prev.filter((item) => item !== entityText)
         : [...prev, entityText]
     );
+    console.log(entityText);
+    console.log(entities.find((entity) => entity.text === entityText)?.label);
     dispatch(
       addEntity({
         text: entityText,

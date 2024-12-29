@@ -38,7 +38,7 @@ const Page = (props: Props) => {
 
     try {
       const response = await fetch(
-        "https://654d-34-147-71-175.ngrok-free.app/predict",
+        "https://c67e-34-82-126-81.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
@@ -46,7 +46,7 @@ const Page = (props: Props) => {
       );
       const data = await response.json();
       console.log(data);
-      const redactedImageUrl = `https://654d-34-147-71-175.ngrok-free.app/${data?.redacted_image_path}`;
+      const redactedImageUrl = `https://c67e-34-82-126-81.ngrok-free.app/${data?.redacted_image_path}`;
       setRedactedImage(redactedImageUrl);
       console.log(redactedImageUrl);
     } catch (err) {

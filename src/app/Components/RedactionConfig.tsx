@@ -10,13 +10,13 @@ import { setLevel } from "@/features/Options/OptionsSlice";
 import { Progress } from "@/components/ui/progress";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 interface Props {
-  pdfFile: File | null;
+  File: File | null;
 }
 
 type ConfigType = "Mask" | "Category" | "Synthetic";
 
 function RedactionConfig(props: Props) {
-  const { pdfFile } = props;
+  const { File } = props;
 
   const [activeLevel, setActiveLevel] = useState<ConfigType | null>(null);
   const { progressNum } = useSelector(
@@ -26,11 +26,11 @@ function RedactionConfig(props: Props) {
   const renderActiveComponent = () => {
     switch (activeLevel) {
       case "Mask":
-        return <RedactionLevel1 pdfFile={pdfFile} />;
+        return <RedactionLevel1 File={File} />;
       case "Category":
-        return <RedactionLevel2 pdfFile={pdfFile} />;
+        return <RedactionLevel2 File={File} />;
       case "Synthetic":
-        return <RedactionLevel3 pdfFile={pdfFile} />;
+        return <RedactionLevel3 File={File} />;
       default:
         return null;
     }

@@ -7,11 +7,11 @@ import { setRedactionType } from "@/features/Options/OptionsSlice";
 import EntitySelect from "./EntitySelect";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 interface Props {
-  pdfFile: File | null;
+  File: File | null;
 }
 
 function RedactionLevel1(props: Props) {
-  const { pdfFile } = props;
+  const { File } = props;
   const dispatch: AppDispatch = useDispatch();
   const { level, redactionType, entities } = useSelector(
     (state: RootState) => state.options
@@ -21,7 +21,7 @@ function RedactionLevel1(props: Props) {
   );
   const [entityDisplay, setEntityDisplay] = useState<boolean>(false);
   const handleRedactionCall = () => {};
- 
+
   return (
     <div className="">
       <div>
@@ -91,7 +91,7 @@ function RedactionLevel1(props: Props) {
                 dispatch(setRedactionType("Blurring"));
                 handleRedactionCall();
                 setEntityDisplay(true);
-                dispatch(setProgressNum(75)); 
+                dispatch(setProgressNum(75));
               }}
               className="flex gap-20  cursor-pointer"
             >
@@ -101,7 +101,7 @@ function RedactionLevel1(props: Props) {
           </motion.div>
         </div>
       ) : (
-        <EntitySelect pdfFile={pdfFile} />
+        <EntitySelect File={File} />
       )}
     </div>
   );

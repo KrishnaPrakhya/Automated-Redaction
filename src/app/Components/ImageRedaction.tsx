@@ -5,7 +5,6 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
-import { setImageUrl } from "@/features/image/imageSlice";
 interface Props {}
 
 function ImageRedaction(props: Props) {
@@ -63,13 +62,6 @@ function ImageRedaction(props: Props) {
             accept="image/*"
             onChange={(e) => {
               setSelectedImage(e.target.files?.[0] || null);
-              dispatch(
-                setImageUrl(
-                  e.target.files?.[0]
-                    ? URL.createObjectURL(e.target.files[0])
-                    : null
-                )
-              );
             }}
           />
           <CloudUploadIcon sx={{ fontSize: 48, color: "text.secondary" }} />

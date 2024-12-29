@@ -6,11 +6,11 @@ import { setRedactionType } from "@/features/Options/OptionsSlice";
 import EntitySelect from "./EntitySelect";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 interface Props {
-  pdfFile: File | null;
+  File: File | null;
 }
 
 function RedactionLevel2(props: Props) {
-  const { pdfFile } = props;
+  const { File } = props;
   const dispatch: AppDispatch = useDispatch();
   const [entityDisplay, setEntityDisplay] = useState(false);
   const { level } = useSelector((state: RootState) => state.options);
@@ -30,7 +30,7 @@ function RedactionLevel2(props: Props) {
           </Button>
         </div>
       ) : (
-        <EntitySelect pdfFile={pdfFile} />
+        <EntitySelect File={File} />
       )}
     </div>
   );
