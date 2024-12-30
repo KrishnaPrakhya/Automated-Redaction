@@ -18,14 +18,120 @@ UPLOAD_FOLDER = './uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 labels = [
-    "Person", "name", "DATE", "age", "gmail", "city", "place",
-"mobile numbers",   
-    "occupation", "language", "ACCOUNT INFORMATION", "TRANSACTION DETAILS",
-    "INVESTMENT DETAILS", "LOAN DETAILS", "INSURANCE POLICIES",
-    "INCOME AND EARNINGS", "EXPENDITURE AND BUDGET", "TAX DETAILS",
-    "ACADEMIC RECORDS", "ENROLLMENT DETAILS", "COURSES AND PROGRAMS",
-    "ASSESSMENTS AND EXAMS", "EXTRACURRICULAR ACTIVITIES", "SCHOLARSHIPS",
-    "ATTENDANCE AND DISCIPLINE", "PROJECTS AND ASSIGNMENTS"
+    "PERSON_NAME",
+    "DATE_OF_BIRTH",
+    "AGE",
+    "GENDER",
+    "NATIONALITY",
+    "MARITAL_STATUS",
+    
+    "EMAIL_ADDRESS",
+    "PHONE_NUMBER",
+    "MOBILE_NUMBER",
+    "FAX_NUMBER",
+    "POSTAL_ADDRESS",
+    "PERMANENT_ADDRESS",
+    
+    "CITY",
+    "STATE",
+    "COUNTRY",
+    "ZIP_CODE",
+    "LANDMARK",
+    
+    "OCCUPATION",
+    "JOB_TITLE",
+    "EMPLOYER_NAME",
+    "WORK_ADDRESS",
+    "WORK_EXPERIENCE",
+    "SKILLS",
+    
+    "QUALIFICATION",
+    "INSTITUTION_NAME",
+    "GRADUATION_YEAR",
+    "ACADEMIC_SCORE",
+    "CERTIFICATION",
+    "SPECIALIZATION",
+    
+    "BANK_NAME",
+    "ACCOUNT_NUMBER",
+    "IFSC_CODE",
+    "CREDIT_CARD_NUMBER",
+    "PAN_NUMBER",
+    "TAX_ID",
+    "SALARY",
+    "INCOME",
+    
+    "TRANSACTION_ID",
+    "TRANSACTION_DATE",
+    "AMOUNT",
+    "PAYMENT_METHOD",
+    "CURRENCY",
+    "MERCHANT_NAME",
+    
+    "ID_NUMBER",
+    "PASSPORT_NUMBER",
+    "DRIVING_LICENSE",
+    "VOTER_ID",
+    "AADHAR_NUMBER",
+    
+    "ENROLLMENT_NUMBER",
+    "REGISTRATION_NUMBER",
+    "COURSE_NAME",
+    "SEMESTER",
+    "SUBJECT_NAME",
+    "GRADE",
+    "ATTENDANCE_PERCENTAGE",
+    
+    "POLICY_NUMBER",
+    "POLICY_TYPE",
+    "PREMIUM_AMOUNT",
+    "COVERAGE_AMOUNT",
+    "EXPIRY_DATE",
+    
+    "LOAN_ACCOUNT_NUMBER",
+    "LOAN_TYPE",
+    "LOAN_AMOUNT",
+    "INTEREST_RATE",
+    "EMI_AMOUNT",
+    
+    "DATE",
+    "TIME",
+    "DURATION",
+    "PERIOD",
+    
+    "MEDICAL_RECORD_NUMBER",
+    "DIAGNOSIS",
+    "MEDICATION",
+    "BLOOD_GROUP",
+    
+    "VEHICLE_NUMBER",
+    "CHASSIS_NUMBER",
+    "ENGINE_NUMBER",
+    "MODEL_NUMBER",
+    
+    "ORGANIZATION_NAME",
+    "REGISTRATION_NUMBER",
+    "DEPARTMENT_NAME",
+    "BRANCH_NAME",
+    
+    "IP_ADDRESS",
+    "MAC_ADDRESS",
+    "URL",
+    "USERNAME",
+    
+    "SOCIAL_MEDIA_HANDLE",
+    "PROFILE_ID",
+    "ACCOUNT_USERNAME",
+    
+    "PROJECT_NAME",
+    "PROJECT_ID",
+    "CLIENT_NAME",
+    "DEADLINE_DATE",
+    
+    "EVENT_NAME",
+    "EVENT_DATE",
+    "VENUE",
+    "ORGANIZER_NAME"
 ]
 
 def is_image_file(filename):

@@ -137,7 +137,7 @@ function Page(props: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="w-[550px] flex-none bg-gray-500 "
+            className="w-[550px] flex-none bg-gray-500 overflow-y-scroll"
           >
             <RedactionConfig File={file} />{" "}
           </motion.div>
