@@ -99,7 +99,7 @@ function EntitySelect(props: Props) {
         })}
       </ul>
       {progressNum === 100 ? (
-        <p className="text-white">
+        <p className=" text-xl font-semibold">
           Please check your file directory. It's been thrown there!
         </p>
       ) : (

@@ -1,37 +1,60 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import RedactionConfig from "../Components/RedactionConfig";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { Progress } from "@/components/ui/progress";
+import {
+  FileText,
+  Image,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { AppDispatch, RootState } from "@/redux/store";
 import { setEntities } from "@/features/Options/OptionsSlice";
-import ImageRedaction from "../Components/ImageRedaction";
 
-interface Props {}
-
-function Page(props: Props) {
-  const [file, setFile] = useState<File | null>(null); // Single state for either PDF or image
+function GradationalRedaction() {
+  const [file, setFile] = useState<File | null>(null);
   const [showConfigs, setShowConfigs] = useState(false);
   const [fileActive, setFileActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pdfRedaction, setPdfRedaction] = useState<boolean | null>(null);
   const [imageRedaction, setImageRedaction] = useState<boolean | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const dispatch: AppDispatch = useDispatch();
+
+  const uploadSuccessRef = useRef<HTMLDivElement>(null);
+  const configSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (fileActive && uploadSuccessRef.current) {
+      uploadSuccessRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [fileActive]);
+
+  useEffect(() => {
+    if (showConfigs && configSectionRef.current) {
+      configSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [showConfigs]);
 
   const handleButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileInputRef.current?.click();
   };
 
   const handleFileUpload = async () => {
-    if (!file) {
-      console.log("No file selected!");
-      return;
-    }
+    if (!file) return;
 
     try {
+      setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
 
@@ -43,108 +66,158 @@ function Page(props: Props) {
       if (response.ok) {
         const data = await response.json();
         setShowConfigs(true);
-        console.log(data.entities);
-
         dispatch(setEntities(data.entities));
-      } else {
-        console.error("Failed to upload the file.");
       }
     } catch (err) {
       console.error("Error uploading file:", err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      setFile(selectedFile); // Update file state
+      setFile(selectedFile);
       setFileActive(true);
-      console.log("File selected:", selectedFile);
     }
   };
 
-  const dispatch: AppDispatch = useDispatch();
-
   return (
-    <div className="h-screen w-screen flex justify-center items-center">
-      <div
-        className={`flex w-full ${
-          showConfigs ? "justify-between" : "justify-center"
-        } items-center gap-4 text-center`}
-      >
-        <div className="flex flex-col  gap-4">
-          <div className="flex gap-4">
-            <Button
-              variant={pdfRedaction ? "destructive" : "default"}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8 mt-14">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Intelligent Document Redaction System
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center text-gray-600">
+              Choose your redaction type and follow the simple steps to secure
+              your documents
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className={`p-6 rounded-xl shadow-lg transition-colors ${
+                pdfRedaction
+                  ? "bg-purple-100 border-2 border-purple-500"
+                  : "bg-white"
+              }`}
               onClick={() => {
                 setPdfRedaction(true);
                 setImageRedaction(false);
               }}
             >
-              PDF Redaction
-            </Button>
-            <Button
-              variant={imageRedaction ? "destructive" : "default"}
+              <div className="flex items-center gap-4 mb-4">
+                <FileText size={32} className="text-purple-600" />
+                <h2 className="text-xl font-semibold">PDF Redaction</h2>
+              </div>
+              <p className="text-gray-600">
+                Securely redact sensitive information from PDF documents while
+                maintaining document structure and formatting.
+              </p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className={`p-6 rounded-xl shadow-lg transition-colors ${
+                imageRedaction
+                  ? "bg-blue-100 border-2 border-blue-500"
+                  : "bg-white"
+              }`}
               onClick={() => {
                 setImageRedaction(true);
                 setPdfRedaction(false);
               }}
             >
-              Image Redaction
-            </Button>
-          </div>
-          <div>
-            {imageRedaction && (
-              <div>
-                <h1>Redact Your Images like never before ever after</h1>
+              <div className="flex items-center gap-4 mb-4">
+                <Image size={32} className="text-blue-600" />
+                <h2 className="text-xl font-semibold">Image Redaction</h2>
               </div>
-            )}
-            {pdfRedaction && (
-              <div>
-                <h1>Redact Your PDFs like never before ever after</h1>
-              </div>
-            )}
+              <p className="text-gray-600">
+                Protect sensitive information in images with advanced redaction
+                techniques and customizable masking options.
+              </p>
+            </motion.div>
           </div>
-        </div>
-        {(pdfRedaction || imageRedaction) && (
-          <div className="flex flex-col items-center justify-center w-full ">
-            {!fileActive ? (
-              <div className="flex flex-col justify-center gap-4 items-center">
-                <input
-                  type="file"
-                  accept=".pdf, image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
-                <Button
-                  onClick={handleButtonClick}
-                  variant="secondary"
-                  color="fill"
-                >
-                  Click Here!
-                </Button>
-                <h3>Click Here To Upload The File To Be Redacted!</h3>
-              </div>
-            ) : (
-              <h1>File Uploaded!</h1>
-            )}
-            <Button onClick={handleFileUpload}>Handle Flask</Button>
-          </div>
-        )}
-        {showConfigs && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="w-[550px] flex-none bg-gray-500 overflow-y-scroll"
-          >
-            <RedactionConfig File={file} />{" "}
-          </motion.div>
-        )}
+
+          {(pdfRedaction || imageRedaction) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <Card>
+                <CardContent className="p-6">
+                  {!fileActive ? (
+                    <div className="text-center">
+                      <input
+                        type="file"
+                        accept={pdfRedaction ? ".pdf" : "image/*"}
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
+                        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Upload your {pdfRedaction ? "PDF" : "image"} file
+                        </h3>
+                        <p className="text-gray-500 mb-4">
+                          Click to select or drag and drop your file here
+                        </p>
+                        <Button
+                          onClick={handleButtonClick}
+                          variant="secondary"
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+                        >
+                          Select File
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div ref={uploadSuccessRef} className="text-center">
+                      <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        File uploaded successfully!
+                      </h3>
+                      <Button
+                        onClick={handleFileUpload}
+                        disabled={isUploading}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+                      >
+                        {isUploading ? "Processing..." : "Start Redaction"}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {showConfigs && (
+            <motion.div
+              ref={configSectionRef}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="rounded-xl overflow-hidden shadow-lg overflow-y-scroll"
+            >
+              <RedactionConfig File={file} />
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
 }
 
-export default Page;
+export default GradationalRedaction;

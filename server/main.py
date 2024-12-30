@@ -9,11 +9,9 @@ import os
 from gliner import GLiNER
 import mimetypes
 import numpy as np
-
 app = Flask(__name__)
 CORS(app)
-
-model = GLiNER.from_pretrained("urchade/gliner_small-v2.1")
+model = GLiNER.from_pretrained("knowledgator/modern-gliner-bi-base-v1.0")
 UPLOAD_FOLDER = './uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -321,22 +319,26 @@ def process_image_redaction(file, entities,redact_type):
                     text_x = x + (w - text_w) // 2
                     text_y = y + (h + text_h) // 2
                     if redact_type == "BlackOut":
+                        print(redact_type)
+
                         cv2.putText(redacted, "",
                               (text_x, text_y), font, font_scale,
                               (255, 255, 255), thickness)
                     elif redact_type == "Vanishing":
+                        print(redact_type)
                         cv2.putText(redacted, "",
                               (text_x, text_y), font, font_scale,
                               (0, 0, 0), thickness)
                     elif redact_type == "Blurring":
+                        print(redact_type)
                         cv2.putText(redacted, "",
                               (text_x, text_y), font, font_scale,
                               (18, 200, 19), thickness)
                     elif redact_type == "CategoryReplacement":
+                        print(redact_type)
                         cv2.putText(redacted, replacement,
                                 (text_x, text_y), font, font_scale,
                                 (255, 255, 255), thickness)
-        
         return redacted
 
     try:

@@ -42,3 +42,4 @@ next-env.d.ts
 /server/env
 /server/chrs_ep28.pth.tar
 /server/model_at_epoch_cheq.keras
+/server/gliner-finetuned

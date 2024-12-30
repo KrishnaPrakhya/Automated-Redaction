@@ -2,10 +2,10 @@ import React from "react";
 
 interface Props {}
 
-function Page(props: Props) {
+function AboutUs(props: Props) {
   const {} = props;
 
-  return <div>About Us</div>;
+  return <div>This is the about page</div>;
 }
 
-export default Page;
+export default AboutUs;

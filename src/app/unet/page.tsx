@@ -3,15 +3,17 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
-
+import { Button } from "@mui/material";
+import { motion } from "framer-motion";
 interface Props {}
-const Page = (props: Props) => {
+const UnetModel = (props: Props) => {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [redactedImage, setRedactedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [imageKey, setImageKey] = useState(0);
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
@@ -32,22 +34,25 @@ const Page = (props: Props) => {
 
     setLoading(true);
     setError("");
-
+    setRedactedImage(null);
     const formData = new FormData();
     formData.append("image", image);
 
     try {
       const response = await fetch(
-        "https://c67e-34-82-126-81.ngrok-free.app/predict",
+        "https://2960-34-83-30-202.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
+          cache: "no-cache",
         }
       );
       const data = await response.json();
       console.log(data);
-      const redactedImageUrl = `https://c67e-34-82-126-81.ngrok-free.app/${data?.redacted_image_path}`;
+      const timestamp = new Date().getTime();
+      const redactedImageUrl = `https://2960-34-83-30-202.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
+      setImageKey((prev) => prev + 1);
       console.log(redactedImageUrl);
     } catch (err) {
       console.error(err);
@@ -58,7 +63,7 @@ const Page = (props: Props) => {
   };
   console.log(redactedImage);
   return (
-    <div
+    <motion.div
       style={{
         padding: "20px",
         maxWidth: "800px",
@@ -66,7 +71,7 @@ const Page = (props: Props) => {
         textAlign: "center",
       }}
     >
-      <h1>Image Redaction</h1>
+      <h1>Image Segmentation</h1>
 
       <div
         {...getRootProps()}
@@ -120,33 +125,34 @@ const Page = (props: Props) => {
 
         {redactedImage && (
           <div className="">
-            <h3 className="mb-5">Redacted Image</h3>
-            <Image
-              src={`${redactedImage}`}
-              alt="Redacted"
-              width={300}
-              height={500}
-            />
-            <a
-              onClick={() => {
-                alert("The fownload will be redirected");
-              }}
-              href={`${redactedImage}`}
-              download="redacted_image.jpg"
-              style={{
-                display: "block",
-                marginTop: "10px",
-                color: "#0070f3",
-                textDecoration: "none",
-              }}
+            <h3 className="mb-3">Download Your Redacted Image</h3>
+            <Button
+              className="flex text-center items-center justify-center"
+              variant="contained"
+              color="secondary"
             >
-              Download Redacted Image
-            </a>
+              <a
+                className="mb-2"
+                onClick={() => {
+                  alert("The download will be redirected");
+                }}
+                href={redactedImage}
+                download="redacted_image.jpg"
+                style={{
+                  display: "block",
+                  marginTop: "10px",
+                  color: "white",
+                  textDecoration: "none",
+                }}
+              >
+                Download Redacted Image
+              </a>
+            </Button>
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-export default Page;
+export default UnetModel;
