@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import RedactionConfig from "../Components/RedactionConfig";
 import { motion } from "framer-motion";
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { AppDispatch, RootState } from "@/redux/store";
 import { setEntities } from "@/features/Options/OptionsSlice";
-
+import axios from "axios";
 function GradationalRedaction() {
   const [file, setFile] = useState<File | null>(null);
   const [showConfigs, setShowConfigs] = useState(false);
@@ -57,12 +57,14 @@ function GradationalRedaction() {
       setIsUploading(true);
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("title", file.name);
 
       const response = await fetch("http://127.0.0.1:5000/api/entities", {
         method: "POST",
         body: formData,
       });
 
+    
       if (response.ok) {
         const data = await response.json();
         setShowConfigs(true);

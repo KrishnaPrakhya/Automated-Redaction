@@ -1,10 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { addEntity } from "@/features/entities/EntitySlice";
+import { Button } from "@/components/ui/Button";
+import { addEntity, removeEntity } from "@/features/entities/EntitySlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 import { motion } from "framer-motion";
+import axios from "axios";
 interface Props {
   File: File | null;
 }
@@ -14,20 +15,21 @@ function EntitySelect(props: Props) {
   const { entities, redactionType } = useSelector(
     (state: RootState) => state.options
   );
-  console.log(entities);
   const { progressNum } = useSelector(
     (state: RootState) => state.ProgressSlice
   );
   const { entitiesSelected } = useSelector((state: RootState) => state.entity);
   const { File } = props;
 
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [redactStatus, setRedactStatus] = useState(false);
 
   const redactSelectedEntities = async () => {
     try {
+      setRedactStatus(false);
       const formData = new FormData();
       if (File) {
         formData.append("file", File);
+        formData.append("title", File.name);
       }
       formData.append("entities", JSON.stringify(entitiesSelected));
       const response = await fetch(
@@ -37,9 +39,22 @@ function EntitySelect(props: Props) {
           body: formData,
         }
       );
-
       if (response.ok) {
+        const redacted = await fetch("/redacted_document.pdf");
+        const pdfBlob = await redacted.blob();
+        formData.append("redacted", pdfBlob, "redacted.pdf");
         const data = await response.json();
+        const result = await axios.post(
+          "http://localhost:4000/uploadFiles",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log(result);
+        setRedactStatus(true);
         if (data.redacted_file_url) {
           console.log("Redacted image URL:", data.redacted_file_url);
         } else if (data.output_file) {
@@ -47,31 +62,40 @@ function EntitySelect(props: Props) {
         }
       }
     } catch (err) {
+      setRedactStatus(false);
       console.log(err);
     }
   };
-  console.log(entitiesSelected);
+
   const handleItemClick = (entityText: string) => {
-    setSelectedEntities((prev) =>
-      prev.includes(entityText)
-        ? prev.filter((item) => item !== entityText)
-        : [...prev, entityText]
+    dispatch(setProgressNum(75));
+
+    const isSelected = entitiesSelected.some(
+      (item) => item.text === entityText
     );
-    console.log(entityText);
-    console.log(entities.find((entity) => entity.text === entityText)?.label);
-    dispatch(
-      addEntity({
-        text: entityText,
-        label: entities.find((entity) => entity.text === entityText)?.label,
-      })
-    );
+
+    if (isSelected) {
+      dispatch(removeEntity(entityText));
+    } else {
+      const entityToAdd = entities.find((entity) => entity.text === entityText);
+      if (entityToAdd) {
+        dispatch(
+          addEntity({
+            text: entityToAdd.text,
+            label: entityToAdd.label,
+          })
+        );
+      }
+    }
   };
 
   return (
     <div>
       <ul>
         {entities.map((entity, index) => {
-          const isSelected = selectedEntities.includes(entity.text);
+          const isSelected = entitiesSelected.some(
+            (item) => item.text === entity.text
+          );
 
           return (
             <motion.li
@@ -98,8 +122,9 @@ function EntitySelect(props: Props) {
           );
         })}
       </ul>
-      {progressNum === 100 ? (
-        <p className=" text-xl font-semibold">
+      
+      {progressNum === 100 && redactStatus ? (
+        <p className="text-xl font-semibold">
           Please check your file directory. It's been thrown there!
         </p>
       ) : (

@@ -39,10 +39,24 @@ const Dashboard = () => {
     },
   ];
 
+  const quickMap = [
+    {
+      title: "Upload Document",
+      link: "/gradationalRedaction",
+    },
+    {
+      title: "Recent Files",
+      link: "/recentFiles",
+    },
+    {
+      title: "About Us",
+      link: "/about",
+    },
+  ];
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6 mt-14">
       <div className="max-w-6xl mx-auto mb-12 text-center opacity-0 animate-fade-in">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900  gradient-title">
+        <h1 className="text-3xl text-center font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
           Advanced Document Redaction
         </h1>
         <p className="text-xl text-gray-900 mb-8">
@@ -86,18 +100,18 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {["Upload Document", "Recent Files", "About Us"].map((action) => (
-                <button
-                  onClick={() => alert("Coming soon!")}
-                  key={action}
+              {quickMap?.map((item) => (
+                <Link
                   className="flex items-center justify-between p-4 rounded-lg bg-white border border-gray-200 transition-all duration-300 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md transform hover:-translate-y-0.5"
+                  key={item.title}
+                  href={item.link}
                 >
                   <span className="flex items-center">
                     <ImageIcon className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">{action}</span>
+                    <span className="font-medium">{item.title}</span>
                   </span>
                   <ChevronRight className="h-5 w-5 text-gray-400" />
-                </button>
+                </Link>
               ))}
             </div>
           </CardContent>

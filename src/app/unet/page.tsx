@@ -40,7 +40,7 @@ const UnetModel = (props: Props) => {
 
     try {
       const response = await fetch(
-        "https://2960-34-83-30-202.ngrok-free.app/predict",
+        "https://836e-34-127-65-51.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
@@ -50,7 +50,7 @@ const UnetModel = (props: Props) => {
       const data = await response.json();
       console.log(data);
       const timestamp = new Date().getTime();
-      const redactedImageUrl = `https://2960-34-83-30-202.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
+      const redactedImageUrl = `https://836e-34-127-65-51.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
       setImageKey((prev) => prev + 1);
       console.log(redactedImageUrl);

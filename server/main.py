@@ -9,10 +9,11 @@ import os
 from gliner import GLiNER
 import mimetypes
 import numpy as np
+import asyncio
 app = Flask(__name__)
 CORS(app)
 model = GLiNER.from_pretrained("knowledgator/modern-gliner-bi-base-v1.0")
-UPLOAD_FOLDER = './uploads'
+UPLOAD_FOLDER = '../public'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 labels = [
@@ -131,7 +132,13 @@ labels = [
     "VENUE",
     "ORGANIZER_NAME"
 ]
-
+import openai
+from dotenv import load_dotenv
+load_dotenv()
+client = openai.OpenAI(
+  api_key=os.getenv("GLHF_API_KEY"),
+  base_url="https://glhf.chat/api/openai/v1",
+)
 def is_image_file(filename):
     mime_type, _ = mimetypes.guess_type(filename)
     return mime_type and mime_type.startswith('image/')
@@ -141,12 +148,9 @@ def is_pdf_file(filename):
     return mime_type == 'application/pdf'
 
 def normalize_text(text):
-    """Normalize text to handle different date formats and variations."""
-    # Handle date formats
     date_pattern = r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
     text = re.sub(date_pattern, lambda m: m.group().replace('/', '-'), text)
     
-    # Remove extra spaces and normalize case
     text = ' '.join(text.split()).lower()
     return text
 
@@ -160,16 +164,12 @@ def entities():
         return jsonify({"error": "No file uploaded"}), 400
 
     try:
-        # Save the uploaded file temporarily
         temp_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(temp_path)
 
-        # Extract text based on file type
         if is_image_file(file.filename):
-            # Process image file
             extracted_text = extract_text_from_image(temp_path)
         elif is_pdf_file(file.filename):
-            # Process PDF file
             with open(temp_path, 'rb') as f:
                 pdf_content = f.read()
             extracted_text = extract_text_from_pdf(pdf_content)
@@ -177,26 +177,22 @@ def entities():
             os.remove(temp_path)
             return jsonify({"error": "Unsupported file type"}), 400
 
-        # Clean up temporary file
         os.remove(temp_path)
 
         if not extracted_text:
             return jsonify({"error": "No text could be extracted from the file"}), 400
 
-        # Preprocess the extracted text
         cleaned_text = preprocess_text(extracted_text)
 
-        # Predict entities using the model
         entities = model.predict_entities(cleaned_text, labels, threshold=0.5)
         
-        # Format the entities
         entity_list = [{"text": entity["text"], "label": entity["label"]} 
                       for entity in entities]
        
         return jsonify({
             "message": "Entities extracted successfully",
             "entities": entity_list,
-            "extractedText": cleaned_text  # Optional: return extracted text for verification
+            "extractedText": cleaned_text 
         }), 200
 
     except Exception as e:
@@ -226,7 +222,6 @@ def extract_text_from_image(image_path):
         if image is None:
             raise ValueError("Failed to load image")
         
-        # Convert to RGB
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         elif image.shape[2] == 4:
@@ -234,11 +229,9 @@ def extract_text_from_image(image_path):
         else:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
-        # Improve image quality for OCR
         image = cv2.resize(image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         image = cv2.GaussianBlur(image, (3,3), 0)
         
-        # Configure Tesseract for better accuracy
         custom_config = r'--oem 3 --psm 6'
         text = pytesseract.image_to_string(image, config=custom_config)
         return text.strip()
@@ -254,11 +247,11 @@ def extract_text_from_pdf(pdf_content):
     return full_text
 
 def preprocess_text(text):
-    """Clean and preprocess extracted text."""
-    # Remove excessive whitespace
+    """Clean and preprocess extracted text while retaining special symbols relevant for redaction."""
     text = re.sub(r'\s+', ' ', text)
-    # Remove special characters while keeping basic punctuation
-    text = re.sub(r'[^\w\s.,!?-]', '', text)
+    
+    text = re.sub(r'[^\w\s.,!?@#$%^&*()-]', '', text)
+    
     return text.strip()
 
 
@@ -330,11 +323,17 @@ def process_image_redaction(file, entities,redact_type):
                               (text_x, text_y), font, font_scale,
                               (0, 0, 0), thickness)
                     elif redact_type == "Blurring":
-                        print(redact_type)
-                        cv2.putText(redacted, "",
-                              (text_x, text_y), font, font_scale,
-                              (18, 200, 19), thickness)
+                        x1, y1 = max(0, x - padding), max(0, y - padding)
+                        x2, y2 = min(image.shape[1], x + w + padding), min(image.shape[0], y + h + padding)
+                        roi = redacted[y1:y2, x1:x2]
+                        blurred_roi = cv2.GaussianBlur(roi, (15, 15), 0)  
+                        redacted[y1:y2, x1:x2] = blurred_roi
                     elif redact_type == "CategoryReplacement":
+                        print(redact_type)
+                        cv2.putText(redacted, replacement,
+                                (text_x, text_y), font, font_scale,
+                                (255, 255, 255), thickness)
+                    elif redact_type=="SyntheticReplacement":
                         print(redact_type)
                         cv2.putText(redacted, replacement,
                                 (text_x, text_y), font, font_scale,
@@ -342,18 +341,14 @@ def process_image_redaction(file, entities,redact_type):
         return redacted
 
     try:
-        # Load and preprocess image
         image = cv2.imread(file_path)
         if image is None:
             raise ValueError("Failed to load image for redaction")
         
-        # Get text boxes
         text_boxes = get_text_boxes(image)
         
-        # Perform redaction
         redacted_image = redact_matching_text(image, text_boxes, entities,redact_type)
         
-        # Save result
         output_path = os.path.join(UPLOAD_FOLDER, f"redacted_{file.filename}")
         cv2.imwrite(output_path, redacted_image)
         
@@ -361,31 +356,124 @@ def process_image_redaction(file, entities,redact_type):
         
     except Exception as e:
         raise Exception(f"Error in image redaction: {str(e)}")
-def process_pdf_redaction(pdf_content, entities, redact_type):
+
+
+async def process_pdf_redaction(pdf_content, entities, redact_type):
     with fitz.open(stream=pdf_content, filetype="pdf") as doc:
-        for page in doc:
-            for entity in entities:
-                areas = page.search_for(entity['text'])
-                for area in areas:
-                    if redact_type == "BlackOut":
-                        page.add_redact_annot(area, fill=(0, 0, 0))
-                    elif redact_type == "Vanishing":
-                        page.add_redact_annot(area, fill=(1, 1, 1))
-                    elif redact_type == "Blurring":
-                        page.add_redact_annot(area, fill=(1, 1, 0))
-                    elif redact_type == "CategoryReplacement":
-                        font_size = (area[3]-area[1])*0.6
-                        annot = page.add_redact_annot(area, text=entity['label'], 
-                                                    text_color=(0, 0, 0), fontsize=font_size)
-                        annot.update()
-            page.apply_redactions()
+        for page_number, page in enumerate(doc):
+            if redact_type == "Blurring":
+                for entity in entities:
+                    areas = page.search_for(entity['text'])  # Returns a list of fitz.Rect objects
+                    for area in areas:
+                        try:
+                            blur_annot = page.add_redact_annot(area, fill=(255, 255, 255))  # White base
+                            # blur_annot.set_blur(5)  # Apply blur effect
+                            # blur_annot.update()
+                        except Exception as e:
+                            print(f"Error blurring text on page {page_number}: {str(e)}")
+                            continue
+                page.apply_redactions() 
+            else:
+                for entity in entities:
+                    areas = page.search_for(entity['text'])
+                    cleaned_text = preprocess_text(page.get_text())
+
+                    for area in areas:
+                        try:
+                            if redact_type == "SyntheticReplacement":
+                                font_size = (area[3] - area[1]) * 0.6
+                                if not cleaned_text or not entities:
+                                    return jsonify({"error": "Invalid input data"}), 400
+                                
+                                modified_text = cleaned_text
+                                entity_text = entity["text"]
+                                label = entity["label"]
+                                
+                                context_start = max(0, modified_text.find(entity_text) - 100)
+                                context_end = min(len(modified_text), modified_text.find(entity_text) + len(entity_text) + 100)
+                                context = modified_text[context_start:context_end]
+                                print(context)
+                                completion = client.chat.completions.create(
+                                    model="hf:mistralai/Mistral-7B-Instruct-v0.3",
+                                    messages=[
+                                        {"role": "system", "content": "You are a helpful assistant which generates synthetic replacements for given entities."},
+                                        {"role": "user", "content": f"Context:{context} Entity_TEXT:{entity_text} Label:{label}. Generate ONE synthetic entity similar to the entity without any additional information and text."}
+                                    ]
+                                )
+                                synthetic_replacement = completion.choices[0].message.content.strip()
+                                synthetic_replacement = synthetic_replacement.split()[0]
+                                print(synthetic_replacement)
+                                annot = page.add_redact_annot(
+                                    area, 
+                                    text=synthetic_replacement, 
+                                    text_color=(0, 0, 0), 
+                                    fontsize=font_size
+                                )
+                            else:
+                                if redact_type == "BlackOut":
+                                    annot = page.add_redact_annot(area, fill=(0, 0, 0))
+                                elif redact_type == "Vanishing":
+                                    annot = page.add_redact_annot(area, fill=(1, 1, 1))
+                                annot.update()
+                        except Exception as e:
+                            print(f"Error processing redaction on page {page_number}: {str(e)}")
+                            continue
+                
+                page.apply_redactions()
         
         output_path = os.path.join(UPLOAD_FOLDER, "redacted_document.pdf")
         doc.save(output_path)
         return output_path
 
+
+def generate_synthetic_replacement(entity_text, context, label):
+    print(entity_text)
+    print(context)
+    print(label) 
+    completion = client.chat.completions.create(
+  model="hf:meta-llama/Llama-3.1-405B-Instruct",
+  messages=[
+    {"role": "system", "content": "You are a helpful assistant which analyses the context and corresponding label and entity provided by the user. You have to generate a synthetic replacement for the given entity based on its label and context. Just generate one synthetic entity which is similar but no the entity provided by the user without any additional information,JUST ONE WORD RESPONSE DONT GIVE ADDITIONAL NOTES TOO"},
+    {"role": "user", "content": f"""Context:{context} Entity_TEXT:{entity_text} and Label:{label} JUST GENERATE ONE SYNTHETIC ENTITY WHICH IS SIMILAR BUT NOT THE ENTITY PROVIDED BY THE USER , JUST ONE WORD ANSWER WITHOUT ANY ADDITIONAL INFORMATION."""}
+  ]
+)
+    return completion.choices[0].message.content
+
+
+
+
+async def replace_entities_with_synthetic_text(cleaned_text, entity):
+    """
+    Replace detected entities with synthetic replacements in the text.
+    """
+    modified_text = cleaned_text
+    entity_text = entity["text"]
+    label = entity["label"]
+    context_start = max(0, modified_text.find(entity_text) - 30)
+    context_end = min(len(modified_text), modified_text.find(entity_text) + len(entity_text) + 30)
+    context = modified_text[context_start:context_end]
+    
+    synthetic_replacement = await asyncio.to_thread(
+        generate_synthetic_replacement, entity_text, context, label
+    )
+    print(synthetic_replacement)
+    return synthetic_replacement
+    
+async def synthetic_gen(cleaned_text, entities):
+    
+    if not cleaned_text or not entities:
+        return jsonify({"error": "Invalid input data"}), 400
+    
+    redacted_text = await replace_entities_with_synthetic_text(cleaned_text, entities)
+    return jsonify({
+        "message": "Text redacted with synthetic replacements",
+        "redactedText": redacted_text
+    }), 200
+    
+
 @app.route('/api/redactEntity', methods=['POST'])
-def redact_entity():
+async def redact_entity():
+    print(request.files)
     file = request.files.get('file')
     if not file:
         return jsonify({"error": "File not provided"}), 400
@@ -399,7 +487,7 @@ def redact_entity():
     
     try:
         if is_image_file(file.filename):
-            output_path = process_image_redaction(file, entities,redact_type)
+            output_path =await  process_image_redaction(file, entities,redact_type)
             redacted_url = url_for('static', 
                                  filename=f"uploads/redacted_{file.filename}", 
                                  _external=True)
@@ -410,7 +498,7 @@ def redact_entity():
             
         elif is_pdf_file(file.filename):
             pdf_content = file.read()
-            output_path = process_pdf_redaction(pdf_content, entities, redact_type)
+            output_path = await process_pdf_redaction(pdf_content, entities, redact_type)
             return jsonify({
                 "message": "PDF redacted successfully",
                 "output_file": os.path.basename(output_path)

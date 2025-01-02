@@ -12,7 +12,7 @@ function ImageRedaction(props: Props) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [imagePath, setImagePath] = useState<string | null>(null);
-  const { imageUrl } = useSelector((state: RootState) => state.image);
+  // const { imageUrl } = useSelector((state: RootState) => state.image);
   const handleImageRedaction = async () => {
     const form = new FormData();
     if (!selectedImage) {
@@ -73,7 +73,7 @@ function ImageRedaction(props: Props) {
         {selectedImage && (
           <Box sx={{ mt: 2 }}>
             <img
-              src={imageUrl}
+              // src={imageUrl}
               alt="Selected"
               style={{ maxWidth: "100%", maxHeight: "300px" }}
             />

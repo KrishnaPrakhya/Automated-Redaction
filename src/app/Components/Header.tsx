@@ -11,6 +11,7 @@ function Header() {
     { href: "/", label: "Home" },
     { href: "/gradationalRedaction", label: "Gradational Redaction" },
     { href: "/unet", label: "Image Segmentation" },
+    { href: "/recentFiles", label: "Recent Files" },
     { href: "/about", label: "About Us" },
   ];
 
