@@ -22,7 +22,7 @@ const levelInfo = {
     title: "Level 1 - Basic Masking",
     description:
       "Simple yet effective masking techniques to hide sensitive information",
-    features: ["Black-out redaction", "Blur effects", "Complete removal"],
+    features: ["Black-out redaction", "Complete removal"],
     icon: Shield,
     color: "from-blue-500 to-blue-600",
   },
@@ -71,7 +71,7 @@ function RedactionConfig({ File }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen max-w-xl  bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -83,7 +83,7 @@ function RedactionConfig({ File }: Props) {
 
         {!activeLevel ? (
           <div className="grid gap-6">
-            <h1 className="text-3xl font-bold text-center mb-6">
+            <h1 className="text-xl font-bold text-center mb-1">
               Choose Your Redaction Level
             </h1>
             {(Object.keys(levelInfo) as ConfigType[]).map((level) => {

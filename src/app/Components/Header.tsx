@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/Button";
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -25,17 +26,26 @@ function Header() {
             </Link>
           </div>
           <div className="hidden md:flex space-x-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`${
-                  pathname === link.href ? "text-blue-500" : "text-gray-700"
-                } hover:text-blue-500`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            <SignedIn>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${
+                    pathname === link.href ? "text-blue-500" : "text-gray-700"
+                  } hover:text-blue-500`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </SignedIn>
           </div>
           <div className="flex md:hidden">
             <button
@@ -60,23 +70,37 @@ function Header() {
           </div>
         </div>
       </nav>
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`block ${
-                  pathname === link.href ? "text-blue-500" : "text-gray-700"
-                } hover:text-blue-500`}
-              >
-                {link.label}
-              </Link>
-            ))}
+      <SignedIn>
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`block ${
+                    pathname === link.href ? "text-blue-500" : "text-gray-700"
+                  } hover:text-blue-500`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </SignedIn>
+      <SignedOut>
+        <SignInButton forceRedirectUrl="/">
+          <Button variant="outline">Login</Button>
+        </SignInButton>
+      </SignedOut>
     </header>
   );
 }

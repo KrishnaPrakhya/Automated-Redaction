@@ -4,9 +4,11 @@ import { createSlice } from "@reduxjs/toolkit";
 
 interface num{
   progressNum:number
+  redactStatus:boolean
 }
 const initialState:num={
-  progressNum:0
+  progressNum:0,
+  redactStatus:false
 }
 
 export const ProgressSlice=createSlice({
@@ -15,9 +17,12 @@ export const ProgressSlice=createSlice({
   reducers:{
     setProgressNum:(state,action)=>{
       state.progressNum=action.payload
+    },
+    setRedactStatus:(state,action)=>{
+      state.redactStatus=action.payload
     }
   }
 })
 
-export const {setProgressNum}=ProgressSlice.actions
+export const {setProgressNum,setRedactStatus}=ProgressSlice.actions
 export default ProgressSlice.reducer

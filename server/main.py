@@ -200,11 +200,17 @@ def entities():
             "error": f"Error processing file: {str(e)}"
         }), 500
 
+
 def find_text_matches(source_text, target_text):
     """Find all occurrences of target text in source text with fuzzy matching."""
+    if not source_text or not target_text:
+        return []
+
     source_normalized = normalize_text(source_text)
     target_normalized = normalize_text(target_text)
-    
+    if not target_normalized:
+        return []
+
     matches = []
     start = 0
     while True:
@@ -256,11 +262,12 @@ def preprocess_text(text):
 
 
 
-def process_image_redaction(file, entities,redact_type):
+def process_image_redaction(file, entities, redact_type):
     """Improved image redaction with better text detection and matching."""
+    # Save the uploaded file
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
-    
+
     def get_text_boxes(image):
         """Get text boxes with improved detection."""
         custom_config = r'--oem 3 --psm 6'
@@ -273,7 +280,7 @@ def process_image_redaction(file, entities,redact_type):
                 text = data['text'][i].strip()
                 if text:
                     x, y, w, h = (data['left'][i], data['top'][i],
-                                data['width'][i], data['height'][i])
+                                  data['width'][i], data['height'][i])
                     text_boxes.append({
                         'text': text,
                         'bbox': (x, y, w, h),
@@ -281,83 +288,102 @@ def process_image_redaction(file, entities,redact_type):
                     })
         return text_boxes
 
-    def redact_matching_text(image, text_boxes, entities,redact_type):
-        """Redact text with improved matching."""
+    def find_text_matches(source_text, target_text):
+        """Find matches of target_text in source_text."""
+        matches = []
+        start_idx = source_text.find(target_text)
+        while start_idx != -1:
+            end_idx = start_idx + len(target_text)
+            matches.append((start_idx, end_idx))
+            start_idx = source_text.find(target_text, end_idx)
+        return matches
+
+    def redact_matching_text(image, text_boxes, entities, redact_type):
+        """Redact text with improved matching for multi-word entities."""
         redacted = image.copy()
-        
+
+        # Combine all text from text_boxes into a single source text
+        source_text = " ".join([box['text'] for box in text_boxes])
+
         for entity in entities:
             target_text = entity['text']
-            for box in text_boxes:
-                if find_text_matches(box['text'], target_text):
-                    x, y, w, h = box['bbox']
-                    # Add padding to ensure complete coverage
-                    padding = int(h * 0.1)
-                    cv2.rectangle(redacted,
-                                (x - padding, y - padding),
-                                (x + w + padding, y + h + padding),
-                                (0, 0, 0), -1)
-                    
-                    # Add replacement text
-                    replacement = entity.get('label', 'REDACTED')
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_scale = h / 30
-                    thickness = 1
-                    
-                    # Adjust font size to fit
-                    (text_w, text_h), _ = cv2.getTextSize(replacement, font, font_scale, thickness)
-                    while text_w > w and font_scale > 0.3:
-                        font_scale -= 0.1
-                        (text_w, text_h), _ = cv2.getTextSize(replacement, font, font_scale, thickness)
-                    
-                    text_x = x + (w - text_w) // 2
-                    text_y = y + (h + text_h) // 2
-                    if redact_type == "BlackOut":
-                        print(redact_type)
+            matches = find_text_matches(source_text, target_text)
 
-                        cv2.putText(redacted, "",
-                              (text_x, text_y), font, font_scale,
-                              (255, 255, 255), thickness)
-                    elif redact_type == "Vanishing":
-                        print(redact_type)
-                        cv2.putText(redacted, "",
-                              (text_x, text_y), font, font_scale,
-                              (0, 0, 0), thickness)
-                    elif redact_type == "Blurring":
-                        x1, y1 = max(0, x - padding), max(0, y - padding)
-                        x2, y2 = min(image.shape[1], x + w + padding), min(image.shape[0], y + h + padding)
-                        roi = redacted[y1:y2, x1:x2]
-                        blurred_roi = cv2.GaussianBlur(roi, (15, 15), 0)  
-                        redacted[y1:y2, x1:x2] = blurred_roi
-                    elif redact_type == "CategoryReplacement":
-                        print(redact_type)
-                        cv2.putText(redacted, replacement,
-                                (text_x, text_y), font, font_scale,
-                                (255, 255, 255), thickness)
-                    elif redact_type=="SyntheticReplacement":
-                        print(redact_type)
-                        cv2.putText(redacted, replacement,
-                                (text_x, text_y), font, font_scale,
-                                (255, 255, 255), thickness)
+            for start_idx, end_idx in matches:
+                # Map the match indices back to the corresponding bounding boxes
+                for box in text_boxes:
+                    if target_text in box['text']:
+                        x, y, w, h = box['bbox']
+                        padding = int(h * 0.1)
+                        cv2.rectangle(
+                            redacted,
+                            (x - padding, y - padding),
+                            (x + w + padding, y + h + padding),
+                            (0, 0, 0),
+                            -1,
+                        )
+
+                        replacement = entity.get('label', 'REDACTED')
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        font_scale = h / 30
+                        thickness = 1
+
+                        (text_w, text_h), _ = cv2.getTextSize(
+                            replacement, font, font_scale, thickness
+                        )
+                        while text_w > w and font_scale > 0.3:
+                            font_scale -= 0.1
+                            (text_w, text_h), _ = cv2.getTextSize(
+                                replacement, font, font_scale, thickness
+                            )
+
+                        text_x = x + (w - text_w) // 2
+                        text_y = y + (h + text_h) // 2
+
+                        if redact_type == "BlackOut":
+                            pass  # Already handled by rectangle
+                        elif redact_type == "Vanishing":
+                            cv2.putText(
+                                redacted, "", (text_x, text_y), font, font_scale, (0, 0, 0), thickness
+                            )
+                        elif redact_type == "Blurring":
+                            x1, y1 = max(0, x - padding), max(0, y - padding)
+                            x2, y2 = min(image.shape[1], x + w + padding), min(image.shape[0], y + h + padding)
+                            roi = redacted[y1:y2, x1:x2]
+                            blurred_roi = cv2.GaussianBlur(roi, (15, 15), 0)
+                            redacted[y1:y2, x1:x2] = blurred_roi
+                        elif redact_type in ["CategoryReplacement", "SyntheticReplacement"]:
+                            cv2.putText(
+                                redacted,
+                                replacement,
+                                (text_x, text_y),
+                                font,
+                                font_scale,
+                                (255, 255, 255),
+                                thickness,
+                            )
         return redacted
 
     try:
+        print("hi")
         image = cv2.imread(file_path)
         if image is None:
             raise ValueError("Failed to load image for redaction")
         
+        # Get text boxes
         text_boxes = get_text_boxes(image)
         
-        redacted_image = redact_matching_text(image, text_boxes, entities,redact_type)
+        # Perform redaction
+        redacted_image = redact_matching_text(image, text_boxes, entities, redact_type)
         
-        output_path = os.path.join(UPLOAD_FOLDER, f"redacted_{file.filename}")
+        # Save the redacted image
+        output_path = os.path.join(UPLOAD_FOLDER, "redacted_image.png")
         cv2.imwrite(output_path, redacted_image)
         
         return output_path
-        
+
     except Exception as e:
         raise Exception(f"Error in image redaction: {str(e)}")
-
-
 async def process_pdf_redaction(pdf_content, entities, redact_type):
     with fitz.open(stream=pdf_content, filetype="pdf") as doc:
         for page_number, page in enumerate(doc):
@@ -414,6 +440,10 @@ async def process_pdf_redaction(pdf_content, entities, redact_type):
                                     annot = page.add_redact_annot(area, fill=(0, 0, 0))
                                 elif redact_type == "Vanishing":
                                     annot = page.add_redact_annot(area, fill=(1, 1, 1))
+                                elif redact_type == "CategoryReplacement":
+                                    font_size = (area[3]-area[1])*0.6
+                                    annot = page.add_redact_annot(area, text=entity['label'], 
+                                                    text_color=(0, 0, 0), fontsize=font_size)
                                 annot.update()
                         except Exception as e:
                             print(f"Error processing redaction on page {page_number}: {str(e)}")
@@ -487,7 +517,7 @@ async def redact_entity():
     
     try:
         if is_image_file(file.filename):
-            output_path =await  process_image_redaction(file, entities,redact_type)
+            output_path =await process_image_redaction(file, entities,redact_type)
             redacted_url = url_for('static', 
                                  filename=f"uploads/redacted_{file.filename}", 
                                  _external=True)
@@ -498,7 +528,8 @@ async def redact_entity():
             
         elif is_pdf_file(file.filename):
             pdf_content = file.read()
-            output_path = await process_pdf_redaction(pdf_content, entities, redact_type)
+            output_path =await  process_pdf_redaction(pdf_content, entities, redact_type)
+            print("hiiii")
             return jsonify({
                 "message": "PDF redacted successfully",
                 "output_file": os.path.basename(output_path)

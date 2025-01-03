@@ -15,6 +15,7 @@ import {
 import { AppDispatch, RootState } from "@/redux/store";
 import { setEntities } from "@/features/Options/OptionsSlice";
 import axios from "axios";
+import DocumentViewer from "../Components/DocumentViewer";
 function GradationalRedaction() {
   const [file, setFile] = useState<File | null>(null);
   const [showConfigs, setShowConfigs] = useState(false);
@@ -27,7 +28,9 @@ function GradationalRedaction() {
 
   const uploadSuccessRef = useRef<HTMLDivElement>(null);
   const configSectionRef = useRef<HTMLDivElement>(null);
-
+  const { progressNum } = useSelector(
+    (state: RootState) => state.ProgressSlice
+  );
   useEffect(() => {
     if (fileActive && uploadSuccessRef.current) {
       uploadSuccessRef.current.scrollIntoView({
@@ -64,7 +67,6 @@ function GradationalRedaction() {
         body: formData,
       });
 
-    
       if (response.ok) {
         const data = await response.json();
         setShowConfigs(true);
@@ -87,7 +89,7 @@ function GradationalRedaction() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8 mt-14">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -205,16 +207,29 @@ function GradationalRedaction() {
             </motion.div>
           )}
 
-          {showConfigs && (
-            <motion.div
-              ref={configSectionRef}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="rounded-xl overflow-hidden shadow-lg overflow-y-scroll"
-            >
-              <RedactionConfig File={file} />
-            </motion.div>
+          {showConfigs && file && (
+            <div className="flex gap-4 h-[calc(100vh-200px)]">
+              <div className="w-[60%]">
+                <DocumentViewer
+                  file={file}
+                  isPDF={pdfRedaction!}
+                  progressNum={progressNum}
+                />
+              </div>
+
+              {/* Options Panel - 30% */}
+              <div className="w-[40%]">
+                <motion.div
+                  ref={configSectionRef}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="rounded-xl shadow-lg overflow-y-auto h-full"
+                >
+                  <RedactionConfig File={file} />
+                </motion.div>
+              </div>
+            </div>
           )}
         </motion.div>
       </div>

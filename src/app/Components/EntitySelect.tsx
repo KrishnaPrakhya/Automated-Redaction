@@ -3,7 +3,10 @@ import { addEntity, removeEntity } from "@/features/entities/EntitySlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setProgressNum } from "@/features/progress/ProgressSlice";
+import {
+  setProgressNum,
+  setRedactStatus,
+} from "@/features/progress/ProgressSlice";
 import { motion } from "framer-motion";
 import axios from "axios";
 interface Props {
@@ -15,17 +18,15 @@ function EntitySelect(props: Props) {
   const { entities, redactionType } = useSelector(
     (state: RootState) => state.options
   );
-  const { progressNum } = useSelector(
+  const { progressNum, redactStatus } = useSelector(
     (state: RootState) => state.ProgressSlice
   );
   const { entitiesSelected } = useSelector((state: RootState) => state.entity);
   const { File } = props;
 
-  const [redactStatus, setRedactStatus] = useState(false);
-
   const redactSelectedEntities = async () => {
     try {
-      setRedactStatus(false);
+      dispatch(setRedactStatus(false));
       const formData = new FormData();
       if (File) {
         formData.append("file", File);
@@ -54,7 +55,7 @@ function EntitySelect(props: Props) {
           }
         );
         console.log(result);
-        setRedactStatus(true);
+        dispatch(setRedactStatus(true));
         if (data.redacted_file_url) {
           console.log("Redacted image URL:", data.redacted_file_url);
         } else if (data.output_file) {
@@ -62,7 +63,7 @@ function EntitySelect(props: Props) {
         }
       }
     } catch (err) {
-      setRedactStatus(false);
+      dispatch(setRedactStatus(false));
       console.log(err);
     }
   };
@@ -122,7 +123,7 @@ function EntitySelect(props: Props) {
           );
         })}
       </ul>
-      
+
       {progressNum === 100 && redactStatus ? (
         <p className="text-xl font-semibold">
           Please check your file directory. It's been thrown there!
