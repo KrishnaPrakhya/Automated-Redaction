@@ -21,11 +21,13 @@ function EntitySelect(props: Props) {
   const { progressNum, redactStatus } = useSelector(
     (state: RootState) => state.ProgressSlice
   );
+  const [isLoading, setIsLoading] = useState(false);
   const { entitiesSelected } = useSelector((state: RootState) => state.entity);
   const { File } = props;
 
   const redactSelectedEntities = async () => {
     try {
+      setIsLoading(true);
       dispatch(setRedactStatus(false));
       const formData = new FormData();
       if (File) {
@@ -65,6 +67,8 @@ function EntitySelect(props: Props) {
     } catch (err) {
       dispatch(setRedactStatus(false));
       console.log(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -129,14 +133,36 @@ function EntitySelect(props: Props) {
           Please check your file directory. It's been thrown there!
         </p>
       ) : (
-        <Button
-          onClick={() => {
-            redactSelectedEntities();
-            dispatch(setProgressNum(100));
-          }}
-        >
-          Redact The Selected
-        </Button>
+        <div className="relative">
+          <Button
+            onClick={() => {
+              redactSelectedEntities();
+              dispatch(setProgressNum(100));
+            }}
+            disabled={isLoading}
+            className="relative"
+          >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <motion.div
+                  className="w-4 h-4 rounded-full bg-white"
+                  animate={{
+                    scale: [1, 0.8, 1],
+                    opacity: [1, 0.5, 1],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <span>Processing...</span>
+              </div>
+            ) : (
+              "Redact The Selected"
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );

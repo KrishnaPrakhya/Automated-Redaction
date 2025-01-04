@@ -341,10 +341,10 @@ def process_image_redaction(file, entities, redact_type):
                         text_y = y + (h + text_h) // 2
 
                         if redact_type == "BlackOut":
-                            pass  # Already handled by rectangle
+                            pass 
                         elif redact_type == "Vanishing":
                             cv2.putText(
-                                redacted, "", (text_x, text_y), font, font_scale, (0, 0, 0), thickness
+                                redacted, "", (text_x, text_y), font, font_scale, (255, 255, 255), thickness
                             )
                         elif redact_type == "Blurring":
                             x1, y1 = max(0, x - padding), max(0, y - padding)
@@ -365,20 +365,22 @@ def process_image_redaction(file, entities, redact_type):
         return redacted
 
     try:
-        print("hi")
         image = cv2.imread(file_path)
         if image is None:
             raise ValueError("Failed to load image for redaction")
         
         # Get text boxes
+        print("hi")
         text_boxes = get_text_boxes(image)
         
         # Perform redaction
         redacted_image = redact_matching_text(image, text_boxes, entities, redact_type)
         
+        print("Hello")
         # Save the redacted image
-        output_path = os.path.join(UPLOAD_FOLDER, "redacted_image.png")
+        output_path = os.path.join(UPLOAD_FOLDER, "redacted_image.jpg")
         cv2.imwrite(output_path, redacted_image)
+        print(output_path)
         
         return output_path
 
@@ -508,37 +510,30 @@ async def redact_entity():
     if not file:
         return jsonify({"error": "File not provided"}), 400
 
-    try:
-        entities = json.loads(request.form.get('entities', '[]'))
-    except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON for entities"}), 400
-    
+    entities = json.loads(request.form.get('entities', '[]'))
+   
     redact_type = request.args.get('type', 'BlackOut')
     
-    try:
-        if is_image_file(file.filename):
-            output_path =await process_image_redaction(file, entities,redact_type)
-            redacted_url = url_for('static', 
-                                 filename=f"uploads/redacted_{file.filename}", 
-                                 _external=True)
-            return jsonify({
-                "message": "Image redacted successfully",
-                "redacted_file_url": redacted_url
-            }), 200
+    if is_image_file(file.filename):
+        output_path =process_image_redaction(file, entities,redact_type)
+        redacted_url = url_for('static', 
+                                filename=f"../public/redacted_image.jpg", 
+                                _external=True)
+        return jsonify({
+            "message": "Image redacted successfully",
+            "redacted_file_url": redacted_url
+        }), 200
+        
+    elif is_pdf_file(file.filename):
+        pdf_content = file.read()
+        output_path =await  process_pdf_redaction(pdf_content, entities, redact_type)
+        print("hiiii")
+        return jsonify({
+            "message": "PDF redacted successfully",
+            "output_file": os.path.basename(output_path)
+        }), 200
+        
             
-        elif is_pdf_file(file.filename):
-            pdf_content = file.read()
-            output_path =await  process_pdf_redaction(pdf_content, entities, redact_type)
-            print("hiiii")
-            return jsonify({
-                "message": "PDF redacted successfully",
-                "output_file": os.path.basename(output_path)
-            }), 200
-            
-        else:
-            return jsonify({"error": "Unsupported file type"}), 400
-            
-    except Exception as e:
-        return jsonify({"error": f"Processing error: {str(e)}"}), 500
+    
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

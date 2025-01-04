@@ -28,7 +28,7 @@ const DocumentViewer = React.memo(
             />
           ) : (
             <img
-              src={redactStatus ? "/redacted_image.png" : documentUrl}
+              src={redactStatus ? "/redacted_image.jpg" : documentUrl}
               alt="Preview"
               className="w-full h-full object-contain"
             />
