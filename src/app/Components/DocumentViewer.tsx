@@ -17,17 +17,13 @@ const DocumentViewer = React.memo(
       (state: RootState) => state.ProgressSlice
     );
 
-    // Add timestamp state for cache busting
     const [timestamp, setTimestamp] = useState(Date.now());
-
-    // Update timestamp when redactStatus changes
     useEffect(() => {
       if (redactStatus) {
         setTimestamp(Date.now());
       }
     }, [redactStatus]);
 
-    // Function to construct cache-busted URL
     const getRedactedUrl = (path: string) => {
       return `${path}?t=${timestamp}`;
     };
@@ -57,7 +53,6 @@ const DocumentViewer = React.memo(
               }
               alt="Preview"
               className="w-full h-full object-contain"
-              // Add key to force React to re-render the image element
               key={timestamp}
             />
           )}
