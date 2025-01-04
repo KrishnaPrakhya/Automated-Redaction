@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -29,7 +29,6 @@ function RedactionLevel2(props: Props) {
   if (entityDisplay) {
     return <EntitySelect File={File} />;
   }
-
   return (
     <Card className="bg-slate-800 text-white">
       <CardHeader>

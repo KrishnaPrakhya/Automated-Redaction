@@ -261,10 +261,8 @@ def preprocess_text(text):
     return text.strip()
 
 
-
 def process_image_redaction(file, entities, redact_type):
     """Improved image redaction with better text detection and matching."""
-    # Save the uploaded file
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
 
@@ -276,7 +274,7 @@ def process_image_redaction(file, entities, redact_type):
         text_boxes = []
         n_boxes = len(data['text'])
         for i in range(n_boxes):
-            if int(data['conf'][i]) > 60:  # Confidence threshold
+            if int(data['conf'][i]) > 60:  
                 text = data['text'][i].strip()
                 if text:
                     x, y, w, h = (data['left'][i], data['top'][i],
@@ -302,7 +300,6 @@ def process_image_redaction(file, entities, redact_type):
         """Redact text with improved matching for multi-word entities."""
         redacted = image.copy()
 
-        # Combine all text from text_boxes into a single source text
         source_text = " ".join([box['text'] for box in text_boxes])
 
         for entity in entities:
@@ -310,7 +307,6 @@ def process_image_redaction(file, entities, redact_type):
             matches = find_text_matches(source_text, target_text)
 
             for start_idx, end_idx in matches:
-                # Map the match indices back to the corresponding bounding boxes
                 for box in text_boxes:
                     if target_text in box['text']:
                         x, y, w, h = box['bbox']
@@ -339,7 +335,9 @@ def process_image_redaction(file, entities, redact_type):
 
                         text_x = x + (w - text_w) // 2
                         text_y = y + (h + text_h) // 2
-
+                        print(redact_type)
+                        print(redact_type)
+                        print(redact_type)
                         if redact_type == "BlackOut":
                             pass 
                         elif redact_type == "Vanishing":
@@ -352,6 +350,7 @@ def process_image_redaction(file, entities, redact_type):
                             roi = redacted[y1:y2, x1:x2]
                             blurred_roi = cv2.GaussianBlur(roi, (15, 15), 0)
                             redacted[y1:y2, x1:x2] = blurred_roi
+                        
                         elif redact_type in ["CategoryReplacement", "SyntheticReplacement"]:
                             cv2.putText(
                                 redacted,
@@ -369,18 +368,12 @@ def process_image_redaction(file, entities, redact_type):
         if image is None:
             raise ValueError("Failed to load image for redaction")
         
-        # Get text boxes
-        print("hi")
         text_boxes = get_text_boxes(image)
         
-        # Perform redaction
         redacted_image = redact_matching_text(image, text_boxes, entities, redact_type)
         
-        print("Hello")
-        # Save the redacted image
         output_path = os.path.join(UPLOAD_FOLDER, "redacted_image.jpg")
         cv2.imwrite(output_path, redacted_image)
-        print(output_path)
         
         return output_path
 
@@ -391,12 +384,10 @@ async def process_pdf_redaction(pdf_content, entities, redact_type):
         for page_number, page in enumerate(doc):
             if redact_type == "Blurring":
                 for entity in entities:
-                    areas = page.search_for(entity['text'])  # Returns a list of fitz.Rect objects
+                    areas = page.search_for(entity['text']) 
                     for area in areas:
                         try:
-                            blur_annot = page.add_redact_annot(area, fill=(255, 255, 255))  # White base
-                            # blur_annot.set_blur(5)  # Apply blur effect
-                            # blur_annot.update()
+                            blur_annot = page.add_redact_annot(area, fill=(255, 255, 255)) 
                         except Exception as e:
                             print(f"Error blurring text on page {page_number}: {str(e)}")
                             continue
@@ -513,7 +504,7 @@ async def redact_entity():
     entities = json.loads(request.form.get('entities', '[]'))
    
     redact_type = request.args.get('type', 'BlackOut')
-    
+    print(redact_type)
     if is_image_file(file.filename):
         output_path =process_image_redaction(file, entities,redact_type)
         redacted_url = url_for('static', 

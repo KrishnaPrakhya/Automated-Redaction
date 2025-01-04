@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardHeader,
@@ -13,7 +13,7 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { setRedactionType } from "@/features/Options/OptionsSlice";
 import { setProgressNum } from "@/features/progress/ProgressSlice";
 import EntitySelect from "./EntitySelect";
-import { Shield, Eye, Droplet } from "lucide-react";
+import { Shield, Eye, Droplet, ImageIcon } from "lucide-react";
 
 interface Props {
   File: File | null;
@@ -61,6 +61,12 @@ export function RedactionLevel1({ File }: Props) {
     },
   ];
 
+ 
+
+  const filteredOptions = redactionOptions.filter(
+    (option) => !(File?.name?.endsWith(".pdf") && option.type === "Blurring")
+  );
+
   if (entityDisplay) {
     return <EntitySelect File={File} />;
   }
@@ -76,7 +82,7 @@ export function RedactionLevel1({ File }: Props) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {redactionOptions.map((option) => (
+            {filteredOptions.map((option) => (
               <motion.div
                 key={option.type}
                 variants={cardVariants}

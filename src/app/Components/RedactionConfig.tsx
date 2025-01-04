@@ -65,11 +65,16 @@ function RedactionConfig({ File }: Props) {
         return <RedactionLevel2 File={File} />;
       case "Synthetic":
         return <RedactionLevel3 File={File} />;
+
       default:
         return null;
     }
   };
 
+  const isImageFile = (fileName: string | undefined): boolean => {
+    return /\.(jpeg|jpg|png|gif)$/i.test(fileName || "");
+  };
+  console.log(File?.name);
   return (
     <div className="min-h-screen max-w-xl  bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
@@ -86,58 +91,62 @@ function RedactionConfig({ File }: Props) {
             <h1 className="text-xl font-bold text-center mb-1">
               Choose Your Redaction Level
             </h1>
-            {(Object.keys(levelInfo) as ConfigType[]).map((level) => {
-              const info = levelInfo[level];
-              const Icon = info.icon;
+            {(Object.keys(levelInfo) as ConfigType[])
+              .filter(
+                (level) => !(isImageFile(File?.name) && level === "Synthetic")
+              )
+              .map((level) => {
+                const info = levelInfo[level];
+                const Icon = info.icon;
 
-              return (
-                <motion.div
-                  key={level}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Card
-                    className="cursor-pointer overflow-hidden"
-                    onClick={() => {
-                      setActiveLevel(level);
-                      dispatch(setLevel(level));
-                      dispatch(setProgressNum(30));
-                    }}
+                return (
+                  <motion.div
+                    key={level}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`p-3 rounded-lg bg-gradient-to-r ${info.color} text-white`}
-                        >
-                          <Icon size={24} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2">
-                            {info.title}
-                          </h3>
-                          <p className="text-gray-600 mb-4">
-                            {info.description}
-                          </p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {info.features.map((feature, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                                <span className="text-sm text-gray-600">
-                                  {feature}
-                                </span>
-                              </div>
-                            ))}
+                    <Card
+                      className="cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setActiveLevel(level);
+                        dispatch(setLevel(level));
+                        dispatch(setProgressNum(30));
+                      }}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`p-3 rounded-lg bg-gradient-to-r ${info.color} text-white`}
+                          >
+                            <Icon size={24} />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold mb-2">
+                              {info.title}
+                            </h3>
+                            <p className="text-gray-600 mb-4">
+                              {info.description}
+                            </p>
+                            <div className="grid grid-cols-1 gap-2">
+                              {info.features.map((feature, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                  <span className="text-sm text-gray-600">
+                                    {feature}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
           </div>
         ) : (
           <div className="space-y-6">
