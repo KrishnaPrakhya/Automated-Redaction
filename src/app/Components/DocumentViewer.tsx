@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
+"use client";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSelector, UseSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+
 interface DocumentViewerProps {
   file: File;
   isPDF: boolean;
@@ -14,6 +16,22 @@ const DocumentViewer = React.memo(
     const { redactStatus } = useSelector(
       (state: RootState) => state.ProgressSlice
     );
+
+    // Add timestamp state for cache busting
+    const [timestamp, setTimestamp] = useState(Date.now());
+
+    // Update timestamp when redactStatus changes
+    useEffect(() => {
+      if (redactStatus) {
+        setTimestamp(Date.now());
+      }
+    }, [redactStatus]);
+
+    // Function to construct cache-busted URL
+    const getRedactedUrl = (path: string) => {
+      return `${path}?t=${timestamp}`;
+    };
+
     return (
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -23,14 +41,24 @@ const DocumentViewer = React.memo(
         <div className="h-[calc(100%-2rem)] rounded-lg overflow-hidden bg-gray-100">
           {isPDF ? (
             <iframe
-              src={redactStatus ? "/redacted_document.pdf" : documentUrl}
+              src={
+                redactStatus
+                  ? getRedactedUrl("/redacted_document.pdf")
+                  : documentUrl
+              }
               className="w-full h-full"
             />
           ) : (
             <img
-              src={redactStatus ? "/redacted_image.jpg" : documentUrl}
+              src={
+                redactStatus
+                  ? getRedactedUrl("/redacted_image.jpg")
+                  : documentUrl
+              }
               alt="Preview"
               className="w-full h-full object-contain"
+              // Add key to force React to re-render the image element
+              key={timestamp}
             />
           )}
         </div>

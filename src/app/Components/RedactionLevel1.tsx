@@ -61,7 +61,19 @@ export function RedactionLevel1({ File }: Props) {
     },
   ];
 
- 
+  if (
+    File?.name?.endsWith(".jpg") ||
+    File?.name?.endsWith(".jpeg") ||
+    File?.name?.endsWith(".png")
+  ) {
+    redactionOptions.push({
+      type: "RedactObjects",
+      title: "Object Redaction",
+      description:
+        "Detect and redact objects like faces in images using advanced AI and Haarcascade techniques.",
+      icon: <ImageIcon className="w-6 h-6" />,
+    });
+  }
 
   const filteredOptions = redactionOptions.filter(
     (option) => !(File?.name?.endsWith(".pdf") && option.type === "Blurring")

@@ -265,7 +265,6 @@ def process_image_redaction(file, entities, redact_type):
     """Improved image redaction with better text detection and matching."""
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
-
     def get_text_boxes(image):
         """Get text boxes with improved detection."""
         custom_config = r'--oem 3 --psm 6'
@@ -297,53 +296,106 @@ def process_image_redaction(file, entities, redact_type):
         return matches
 
     def redact_matching_text(image, text_boxes, entities, redact_type):
-        """Redact text with improved matching for multi-word entities."""
         redacted = image.copy()
 
         source_text = " ".join([box['text'] for box in text_boxes])
+        print(entities)
 
+        if redact_type == "RedactObjects":
+            print("FACE")
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+            gray = cv2.cvtColor(redacted, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(
+                gray,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30)
+            )
+
+            for (x, y, w, h) in faces:
+                cv2.rectangle(redacted, (x, y), (x+w, y+h), (0, 0, 0), -1)
+                cv2.putText(
+                    redacted,
+                    "FACE REDACTED",
+                    (x, y-10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    1
+                )
+
+                roi_gray = gray[y:y+h, x:x+w]
+                eyes = eye_cascade.detectMultiScale(roi_gray)
+                for (ex, ey, ew, eh) in eyes:
+                    cv2.rectangle(
+                        redacted,
+                        (x + ex, y + ey),
+                        (x + ex + ew, y + ey + eh),
+                        (0, 0, 0),
+                        -1
+                    )
+
+        # Handle other redaction types
         for entity in entities:
             target_text = entity['text']
             matches = find_text_matches(source_text, target_text)
-
+            
             for start_idx, end_idx in matches:
                 for box in text_boxes:
                     if target_text in box['text']:
                         x, y, w, h = box['bbox']
                         padding = int(h * 0.1)
-                        cv2.rectangle(
-                            redacted,
-                            (x - padding, y - padding),
-                            (x + w + padding, y + h + padding),
-                            (0, 0, 0),
-                            -1,
-                        )
-
+                        
+                        # Common calculations for text placement
                         replacement = entity.get('label', 'REDACTED')
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         font_scale = h / 30
                         thickness = 1
-
+                        
                         (text_w, text_h), _ = cv2.getTextSize(
                             replacement, font, font_scale, thickness
                         )
+                        
+                        # Adjust font scale if text is too wide
                         while text_w > w and font_scale > 0.3:
                             font_scale -= 0.1
                             (text_w, text_h), _ = cv2.getTextSize(
                                 replacement, font, font_scale, thickness
                             )
-
+                        
                         text_x = x + (w - text_w) // 2
                         text_y = y + (h + text_h) // 2
-                        print(redact_type)
-                        print(redact_type)
-                        print(redact_type)
-                        if redact_type == "BlackOut":
-                            pass 
-                        elif redact_type == "Vanishing":
-                            cv2.putText(
-                                redacted, "", (text_x, text_y), font, font_scale, (255, 255, 255), thickness
+                        
+                        if redact_type == "BlackOut" or redact_type=="RedactObjects":
+                            # Draw black rectangle
+                            cv2.rectangle(
+                                redacted,
+                                (x - padding, y - padding),
+                                (x + w + padding, y + h + padding),
+                                (0, 0, 0),
+                                -1,
                             )
+                            cv2.putText(
+                                redacted,
+                                "",
+                                (text_x, text_y),
+                                font,
+                                font_scale,
+                                (255, 255, 255),
+                                thickness,
+                            )
+                        
+                        elif redact_type == "Vanishing":
+                            cv2.rectangle(
+                                redacted,
+                                (x - padding, y - padding),
+                                (x + w + padding, y + h + padding),
+                                (255, 255, 255),
+                                -1,
+                            )
+                        
                         elif redact_type == "Blurring":
                             x1, y1 = max(0, x - padding), max(0, y - padding)
                             x2, y2 = min(image.shape[1], x + w + padding), min(image.shape[0], y + h + padding)
@@ -352,15 +404,25 @@ def process_image_redaction(file, entities, redact_type):
                             redacted[y1:y2, x1:x2] = blurred_roi
                         
                         elif redact_type in ["CategoryReplacement", "SyntheticReplacement"]:
+                            # First cover the original text with white background
+                            cv2.rectangle(
+                                redacted,
+                                (x - padding, y - padding),
+                                (x + w + padding, y + h + padding),
+                                (255, 255, 255),
+                                -1,
+                            )
+                            # Then add the replacement text in black
                             cv2.putText(
                                 redacted,
                                 replacement,
                                 (text_x, text_y),
                                 font,
                                 font_scale,
-                                (255, 255, 255),
+                                (0, 0, 0),
                                 thickness,
                             )
+        
         return redacted
 
     try:
