@@ -1,23 +1,29 @@
 "use client";
 import React, { useState } from "react";
-import axios from "axios";
 import { useDropzone } from "react-dropzone";
-import Image from "next/image";
-import { Button } from "@mui/material";
-import { motion } from "framer-motion";
-interface Props {}
-const UnetModel = (props: Props) => {
+import { Upload, Image as ImageIcon, Loader2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const UnetModel = () => {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [redactedImage, setRedactedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [imageKey, setImageKey] = useState(0);
-  const { getRootProps, getInputProps } = useDropzone({
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        const file = acceptedFiles[0];
+        const file: File | null = acceptedFiles[0];
         setImage(file);
         setPreview(URL.createObjectURL(file));
         setRedactedImage(null);
@@ -40,7 +46,7 @@ const UnetModel = (props: Props) => {
 
     try {
       const response = await fetch(
-        "https://836e-34-127-65-51.ngrok-free.app/predict",
+        "https://08a8-34-80-119-132.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
@@ -48,12 +54,10 @@ const UnetModel = (props: Props) => {
         }
       );
       const data = await response.json();
-      console.log(data);
       const timestamp = new Date().getTime();
-      const redactedImageUrl = `https://836e-34-127-65-51.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
+      const redactedImageUrl = `https://08a8-34-80-119-132.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
       setImageKey((prev) => prev + 1);
-      console.log(redactedImageUrl);
     } catch (err) {
       console.error(err);
       setError("Failed to redact the image. Please try again.");
@@ -61,97 +65,111 @@ const UnetModel = (props: Props) => {
       setLoading(false);
     }
   };
-  console.log(redactedImage);
+
   return (
-    <motion.div
-      style={{
-        padding: "20px",
-        maxWidth: "800px",
-        margin: "0 auto",
-        textAlign: "center",
-      }}
-    >
-      <h1>Image Segmentation</h1>
-
-      <div
-        {...getRootProps()}
-        style={{
-          border: "2px dashed #ccc",
-          padding: "20px",
-          cursor: "pointer",
-          marginBottom: "20px",
-        }}
-      >
-        <input {...getInputProps()} />
-        <p>
-          {image ? "Replace Image" : "Drag & Drop an Image or Click to Upload"}
-        </p>
-      </div>
-      <div className="flex justify-between">
-        <div>
-          {preview && (
-            <div>
-              <h3 className="mb-5">Preview</h3>
-              <img
-                src={preview}
-                alt="Uploaded Preview"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "300px",
-                  marginBottom: "20px",
-                }}
-              />
-            </div>
-          )}
-
-          <button
-            onClick={handleRedact}
-            style={{
-              background: "#0070f3",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: "5px",
-              fontSize: "16px",
-            }}
-            disabled={loading}
+    <div className="min-h-screen max-w-full bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+        <h1 className="text-6xl font-bold  gradient-title tracking-tighter mb-5">
+          Unet Model
+        </h1>
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-gray-900">
+            Image Segmentation
+          </CardTitle>
+          <CardDescription className="mt-2 text-gray-600">
+            Upload an image to apply advanced segmentation and redaction
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div
+            {...getRootProps()}
+            className={`
+              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+              transition-colors duration-200 ease-in-out
+              ${
+                isDragActive
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300 hover:border-gray-400"
+              }
+            `}
           >
-            {loading ? "Processing..." : "Redact Image"}
-          </button>
-        </div>
+            <input {...getInputProps()} />
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">
+              {image
+                ? "Replace Image"
+                : "Drag & drop an image here, or click to select"}
+            </p>
+          </div>
 
-        {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {preview && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Original Image
+                </h3>
+                <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
 
-        {redactedImage && (
-          <div className="">
-            <h3 className="mb-3">Download Your Redacted Image</h3>
+            {redactedImage && (
+              <div className="space-y-4 flex justify-center items-center flex-col">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Redacted Image
+                </h3>
+                {/* <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video"> */}
+                  {/* <img
+                    key={imageKey}
+                    src={redactedImage}
+                    alt="Redacted"
+                    className="object-contain w-full h-full"
+                  /> */}
+                {/* </div> */}
+                <Button asChild className="w-full" variant="outline">
+                  <a
+                    href={redactedImage}
+                    download="redacted_image.jpg"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    Download Redacted Image
+                  </a>
+                </Button>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-center">
             <Button
-              className="flex text-center items-center justify-center"
-              variant="contained"
-              color="secondary"
+              onClick={handleRedact}
+              disabled={!image || loading}
+              className="w-full sm:w-auto"
+              size="lg"
             >
-              <a
-                className="mb-2"
-                onClick={() => {
-                  alert("The download will be redirected");
-                }}
-                href={redactedImage}
-                download="redacted_image.jpg"
-                style={{
-                  display: "block",
-                  marginTop: "10px",
-                  color: "white",
-                  textDecoration: "none",
-                }}
-              >
-                Download Redacted Image
-              </a>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Redact Image"
+              )}
             </Button>
           </div>
-        )}
-      </div>
-    </motion.div>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

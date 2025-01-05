@@ -12,7 +12,7 @@ import numpy as np
 import asyncio
 app = Flask(__name__)
 CORS(app)
-model = GLiNER.from_pretrained("knowledgator/modern-gliner-bi-base-v1.0")
+model = GLiNER.from_pretrained("knowledgator/modern-gliner-bi-large-v1.0")
 UPLOAD_FOLDER = '../public'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
