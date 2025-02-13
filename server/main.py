@@ -6,6 +6,7 @@ import cv2
 import pytesseract
 from pytesseract import Output
 import os
+import google.generativeai as genai
 from gliner import GLiNER
 import mimetypes
 import numpy as np
@@ -139,6 +140,20 @@ client = openai.OpenAI(
   api_key="glhf_b4cf220f5e847c019eec846167100ff4",
   base_url="https://glhf.chat/api/openai/v1",
 )
+
+genai.configure(api_key=os.getenv("YOUR_API_KEY"))
+model_gemini = genai.GenerativeModel('gemini-1.5-flash-8b')
+
+labels_string = ", ".join(labels)
+
+prompt_template = """Identify redaction entity types from the user request.
+Allowed Entity Types: {allowed_entities}
+Return ONLY comma-separated entity types from the allowed list, relevant to the request.
+No extra text, return empty string if none.
+
+Request: {user_request}. Entities:"""
+
+
 def is_image_file(filename):
     mime_type, _ = mimetypes.guess_type(filename)
     return mime_type and mime_type.startswith('image/')
@@ -529,7 +544,103 @@ async def redact_entity():
             "output_file": os.path.basename(output_path)
         }), 200
         
-            
+
+
+
+
+## Newly Added
+def get_entity_types_for_redaction_gemini(user_prompt):
+    try:
+        convo = model_gemini.start_chat(history=[])
+        gemini_prompt = prompt_template.format(allowed_entities=labels_string, user_request=user_prompt)
+        res = convo.send_message(gemini_prompt)
+        response_text = res.candidates[0].content.parts[0].text.strip()
+
+        if not response_text:
+            return []
+
+        entity_types = [entity.strip() for entity in response_text.split(',')]
+        valid_entity_types = [entity for entity in entity_types if entity in labels]
+        return valid_entity_types
+
+    except Exception as e:
+        print(f"Error during Gemini API call (concise prompt): {e}")
+        return []
+
+
+@app.route('/api/redactEntityPrompt', methods=['POST'])
+async def redact_entity_prompt():
+    print(request.files)
+    file = request.files.get('file')
+    if not file:
+        return jsonify({"error": "File not provided"}), 400
+
+
+    redact_type = request.args.get('type', 'BlackOut')
+    user_prompt = request.form.get('prompt', '') 
+
+    if not user_prompt:
+        return jsonify({"error": "No redaction prompt provided"}), 400
+
+    try:
+        temp_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(temp_path)
+
+        if is_image_file(file.filename):
+            extracted_text = extract_text_from_image(temp_path)
+        elif is_pdf_file(file.filename):
+            with open(temp_path, 'rb') as f:
+                pdf_content = f.read()
+            extracted_text = extract_text_from_pdf(pdf_content)
+        else:
+            os.remove(temp_path)
+            return jsonify({"error": "Unsupported file type"}), 400
+
+        os.remove(temp_path)
+
+        if not extracted_text:
+            return jsonify({"error": "No text could be extracted from the file"}), 400
+
+        cleaned_text = preprocess_text(extracted_text)
+
+        target_entity_types = get_entity_types_for_redaction_gemini(user_prompt)
+        print(f"Gemini identified entity types: {target_entity_types}")
+
+        all_entities = model.predict_entities(cleaned_text, labels, threshold=0.5)
+
+        filtered_entities = [
+            entity for entity in all_entities
+            if entity["label"] in target_entity_types
+        ]
+        print(f"Filtered entities for redaction: {filtered_entities}")
+
+
+        if is_image_file(file.filename):
+            output_path = process_image_redaction(file, filtered_entities, redact_type) 
+            redacted_url = url_for('static',
+                                    filename=f"../public/redacted_image.jpg",
+                                    _external=True)
+            return jsonify({
+                "message": "Image redacted successfully",
+                "redacted_file_url": redacted_url
+            }), 200
+
+        elif is_pdf_file(file.filename):
+            pdf_content = file.read()
+            output_path = await process_pdf_redaction(pdf_content, filtered_entities, redact_type)
+            print("hiiii")
+            return jsonify({
+                "message": "PDF redacted successfully",
+                "output_file": os.path.basename(output_path)
+            }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": f"Error processing file: {str(e)}"
+        }), 500
+
+
+
     
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
