@@ -16,7 +16,7 @@ function AboutUs() {
     {
       icon: <Lock className="w-8 h-8" />,
       level: "Level 2",
-      title: "Enhanced Security",
+      title: "Category Replacement",
       description:
         "Advanced pattern recognition for complex data types including financial records, medical information, and detailed personal records.",
     },

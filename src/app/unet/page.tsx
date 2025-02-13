@@ -46,7 +46,7 @@ const UnetModel = () => {
 
     try {
       const response = await fetch(
-        "https://08a8-34-80-119-132.ngrok-free.app/predict",
+        "https://3ead-35-231-45-74.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
@@ -55,7 +55,7 @@ const UnetModel = () => {
       );
       const data = await response.json();
       const timestamp = new Date().getTime();
-      const redactedImageUrl = `https://08a8-34-80-119-132.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
+      const redactedImageUrl = `https://3ead-35-231-45-74.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
       setImageKey((prev) => prev + 1);
     } catch (err) {
@@ -68,9 +68,9 @@ const UnetModel = () => {
 
   return (
     <div className="min-h-screen max-w-full bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-6xl font-bold  gradient-title tracking-tighter mb-5">
-          Unet Model
-        </h1>
+      <h1 className="text-6xl font-bold  gradient-title tracking-tighter mb-5">
+        Unet Model
+      </h1>
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-900">
@@ -124,7 +124,7 @@ const UnetModel = () => {
                   Redacted Image
                 </h3>
                 {/* <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video"> */}
-                  {/* <img
+                {/* <img
                     key={imageKey}
                     src={redactedImage}
                     alt="Redacted"

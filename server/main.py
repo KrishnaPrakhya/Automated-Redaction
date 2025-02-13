@@ -136,7 +136,7 @@ import openai
 from dotenv import load_dotenv
 load_dotenv()
 client = openai.OpenAI(
-  api_key=os.getenv("GLHF_API_KEY"),
+  api_key="glhf_b4cf220f5e847c019eec846167100ff4",
   base_url="https://glhf.chat/api/openai/v1",
 )
 def is_image_file(filename):
@@ -202,7 +202,6 @@ def entities():
 
 
 def find_text_matches(source_text, target_text):
-    """Find all occurrences of target text in source text with fuzzy matching."""
     if not source_text or not target_text:
         return []
 
@@ -222,7 +221,6 @@ def find_text_matches(source_text, target_text):
     return matches
 
 def extract_text_from_image(image_path):
-    """Extract text from image using OCR with improved configuration."""
     try:
         image = cv2.imread(image_path)
         if image is None:
@@ -245,7 +243,6 @@ def extract_text_from_image(image_path):
         print(f"Error in OCR processing: {str(e)}")
         return ""
 def extract_text_from_pdf(pdf_content):
-    """Extract text from PDF."""
     full_text = ""
     with fitz.open(stream=pdf_content, filetype="pdf") as doc:
         for page in doc:
@@ -253,7 +250,6 @@ def extract_text_from_pdf(pdf_content):
     return full_text
 
 def preprocess_text(text):
-    """Clean and preprocess extracted text while retaining special symbols relevant for redaction."""
     text = re.sub(r'\s+', ' ', text)
     
     text = re.sub(r'[^\w\s.,!?@#$%^&*()-]', '', text)
@@ -262,11 +258,9 @@ def preprocess_text(text):
 
 
 def process_image_redaction(file, entities, redact_type):
-    """Improved image redaction with better text detection and matching."""
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
     def get_text_boxes(image):
-        """Get text boxes with improved detection."""
         custom_config = r'--oem 3 --psm 6'
         data = pytesseract.image_to_data(image, output_type=Output.DICT, config=custom_config)
         
@@ -337,7 +331,6 @@ def process_image_redaction(file, entities, redact_type):
                         -1
                     )
 
-        # Handle other redaction types
         for entity in entities:
             target_text = entity['text']
             matches = find_text_matches(source_text, target_text)
@@ -348,7 +341,6 @@ def process_image_redaction(file, entities, redact_type):
                         x, y, w, h = box['bbox']
                         padding = int(h * 0.1)
                         
-                        # Common calculations for text placement
                         replacement = entity.get('label', 'REDACTED')
                         font = cv2.FONT_HERSHEY_SIMPLEX
                         font_scale = h / 30
@@ -358,7 +350,6 @@ def process_image_redaction(file, entities, redact_type):
                             replacement, font, font_scale, thickness
                         )
                         
-                        # Adjust font scale if text is too wide
                         while text_w > w and font_scale > 0.3:
                             font_scale -= 0.1
                             (text_w, text_h), _ = cv2.getTextSize(
@@ -369,7 +360,6 @@ def process_image_redaction(file, entities, redact_type):
                         text_y = y + (h + text_h) // 2
                         
                         if redact_type == "BlackOut" or redact_type=="RedactObjects":
-                            # Draw black rectangle
                             cv2.rectangle(
                                 redacted,
                                 (x - padding, y - padding),
@@ -404,7 +394,6 @@ def process_image_redaction(file, entities, redact_type):
                             redacted[y1:y2, x1:x2] = blurred_roi
                         
                         elif redact_type in ["CategoryReplacement", "SyntheticReplacement"]:
-                            # First cover the original text with white background
                             cv2.rectangle(
                                 redacted,
                                 (x - padding, y - padding),
@@ -412,7 +401,6 @@ def process_image_redaction(file, entities, redact_type):
                                 (255, 255, 255),
                                 -1,
                             )
-                            # Then add the replacement text in black
                             cv2.putText(
                                 redacted,
                                 replacement,
@@ -475,7 +463,7 @@ async def process_pdf_redaction(pdf_content, entities, redact_type):
                                 context = modified_text[context_start:context_end]
                                 print(context)
                                 completion = client.chat.completions.create(
-                                    model="hf:mistralai/Mistral-7B-Instruct-v0.3",
+                                    model="hf:meta-llama/Llama-3.3-70B-Instruct",
                                     messages=[
                                         {"role": "system", "content": "You are a helpful assistant which generates synthetic replacements for given entities."},
                                         {"role": "user", "content": f"Context:{context} Entity_TEXT:{entity_text} Label:{label}. Generate ONE synthetic entity similar to the entity without any additional information and text."}
@@ -510,51 +498,6 @@ async def process_pdf_redaction(pdf_content, entities, redact_type):
         doc.save(output_path)
         return output_path
 
-
-def generate_synthetic_replacement(entity_text, context, label):
-    print(entity_text)
-    print(context)
-    print(label) 
-    completion = client.chat.completions.create(
-  model="hf:meta-llama/Llama-3.1-405B-Instruct",
-  messages=[
-    {"role": "system", "content": "You are a helpful assistant which analyses the context and corresponding label and entity provided by the user. You have to generate a synthetic replacement for the given entity based on its label and context. Just generate one synthetic entity which is similar but no the entity provided by the user without any additional information,JUST ONE WORD RESPONSE DONT GIVE ADDITIONAL NOTES TOO"},
-    {"role": "user", "content": f"""Context:{context} Entity_TEXT:{entity_text} and Label:{label} JUST GENERATE ONE SYNTHETIC ENTITY WHICH IS SIMILAR BUT NOT THE ENTITY PROVIDED BY THE USER , JUST ONE WORD ANSWER WITHOUT ANY ADDITIONAL INFORMATION."""}
-  ]
-)
-    return completion.choices[0].message.content
-
-
-
-
-async def replace_entities_with_synthetic_text(cleaned_text, entity):
-    """
-    Replace detected entities with synthetic replacements in the text.
-    """
-    modified_text = cleaned_text
-    entity_text = entity["text"]
-    label = entity["label"]
-    context_start = max(0, modified_text.find(entity_text) - 30)
-    context_end = min(len(modified_text), modified_text.find(entity_text) + len(entity_text) + 30)
-    context = modified_text[context_start:context_end]
-    
-    synthetic_replacement = await asyncio.to_thread(
-        generate_synthetic_replacement, entity_text, context, label
-    )
-    print(synthetic_replacement)
-    return synthetic_replacement
-    
-async def synthetic_gen(cleaned_text, entities):
-    
-    if not cleaned_text or not entities:
-        return jsonify({"error": "Invalid input data"}), 400
-    
-    redacted_text = await replace_entities_with_synthetic_text(cleaned_text, entities)
-    return jsonify({
-        "message": "Text redacted with synthetic replacements",
-        "redactedText": redacted_text
-    }), 200
-    
 
 @app.route('/api/redactEntity', methods=['POST'])
 async def redact_entity():
