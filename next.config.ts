@@ -5,19 +5,27 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "3ead-35-231-45-74.ngrok-free.app",
-        port: "", 
-        pathname: "/output/**", 
+        hostname: "eca2-35-185-23-159.ngrok-free.app",
+        port: "",
+        pathname: "/output/**",
       },
       {
-        protocol:"http",
+        protocol: "http",
         hostname: "127.0.0.1",
-        port: "5000", 
-        pathname: "/static/output/**", 
+        port: "5000",
+        pathname: "/static/output/**",
       },
     ],
   },
- 
+
+  async rewrites() {
+    return [
+      {
+        source: "/api/token",
+        destination: "https://app.vectorshift.ai/api/token",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -547,6 +547,11 @@ async def redact_entity():
 
 
 
+@app.route('/api/redactAgent',methods=['POST'])
+def redact_agent():
+    entities_agent=request.get_data()
+    redact_type = request.args.get('type', 'BlackOut')
+    print(entities_agent)
 
 ## Newly Added
 def get_entity_types_for_redaction_gemini(user_prompt):
@@ -614,7 +619,6 @@ async def redact_entity_prompt():
         ]
         print(f"Filtered entities for redaction: {filtered_entities}")
 
-
         if is_image_file(file.filename):
             output_path = process_image_redaction(file, filtered_entities, redact_type) 
             redacted_url = url_for('static',
@@ -626,6 +630,7 @@ async def redact_entity_prompt():
             }), 200
 
         elif is_pdf_file(file.filename):
+            file.seek(0)
             pdf_content = file.read()
             output_path = await process_pdf_redaction(pdf_content, filtered_entities, redact_type)
             print("hiiii")

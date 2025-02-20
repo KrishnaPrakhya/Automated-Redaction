@@ -46,7 +46,7 @@ const UnetModel = () => {
 
     try {
       const response = await fetch(
-        "https://3ead-35-231-45-74.ngrok-free.app/predict",
+        "https://eca2-35-185-23-159.ngrok-free.app/predict",
         {
           method: "POST",
           body: formData,
@@ -55,7 +55,7 @@ const UnetModel = () => {
       );
       const data = await response.json();
       const timestamp = new Date().getTime();
-      const redactedImageUrl = `https://3ead-35-231-45-74.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
+      const redactedImageUrl = `https://eca2-35-185-23-159.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
       setImageKey((prev) => prev + 1);
     } catch (err) {

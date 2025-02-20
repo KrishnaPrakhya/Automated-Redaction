@@ -11,7 +11,7 @@ import {
 import { FileText, Eye } from "lucide-react";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-
+import { motion } from "framer-motion";
 interface Props {}
 
 type FileItem = {
@@ -54,7 +54,12 @@ function Page(props: Props) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 mt-14">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-8 mt-14"
+    >
       <h1 className=" mb-8 animate-fade-in text-3xl text-center font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
         Recent Files
       </h1>
@@ -113,7 +118,7 @@ function Page(props: Props) {
           ))
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

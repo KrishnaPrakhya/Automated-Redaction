@@ -129,9 +129,7 @@ function EntitySelect(props: Props) {
       </ul>
 
       {progressNum === 100 && redactStatus ? (
-        <p className="text-xl font-semibold">
-          Please check your file directory. It's been thrown there!
-        </p>
+        <p className="text-xl font-semibold">Saved to your file directory.</p>
       ) : (
         <div className="relative">
           <Button

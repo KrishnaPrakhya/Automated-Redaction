@@ -217,7 +217,6 @@ function GradationalRedaction() {
                 />
               </div>
 
-              {/* Options Panel - 30% */}
               <div className="w-[40%]">
                 <motion.div
                   ref={configSectionRef}
