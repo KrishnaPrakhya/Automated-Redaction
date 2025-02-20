@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "eca2-35-185-23-159.ngrok-free.app",
+        hostname: "",
         port: "",
         pathname: "/output/**",
       },
