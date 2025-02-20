@@ -10,7 +10,7 @@ function Pipeline() {
         const url = "https://api.vectorshift.ai/api/pipelines/run";
 
         const headers = {
-          "Api-Key": "sk_x1LY3e4XJ6zXUSpdjGnGJwsssa1w4H1sylTtiokV6ZoDMpHG", // ✅ Secure API Key
+          "Api-Key": "", // ✅ Secure API Key
           "Content-Type": "application/json",
         };
       } catch (error) {

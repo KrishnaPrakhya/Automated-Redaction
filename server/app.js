@@ -6,8 +6,8 @@ app.use(cors())
 app.use(express.json())
 app.use("/upload",express.static("upload"));
 const multer  = require('multer')
-
-const mongoDBURI="mongodb+srv://trustcureorg:redaction@cluster7.hzgfnmh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster7"
+require('dotenv').config();
+const mongoDBURI=process.env.MONGO_API
 
 mongoose.connect(mongoDBURI,{
   useNewUrlParser:true,
