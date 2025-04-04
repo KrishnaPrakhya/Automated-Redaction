@@ -1,7 +1,7 @@
 # Automated Redaction
 
 **Protect Your Data, Keep It Simple**  
-This project is a smart tool that hides sensitive information in your documents, keeps the data structure intact, and secures it with strong encryption. Using AI technologies like BERT and spaCy, it creates realistic synthetic data while offering an easy-to-use interface for both online and offline use. Whether you're an individual or a business, Automated Redaction ensures your data stays private without the hassle.
+This project is a smart tool that hides sensitive information in your documents, keeps the data structure intact, and secures it with strong encryption. Using AI technologies like BERT and Gliner Model, it creates realistic synthetic data while offering an easy-to-use interface for both online and offline use. Whether you're an individual or a business, Automated Redaction ensures your data stays private without the hassle.
 
 ---
 
@@ -24,7 +24,7 @@ Redaction means hiding private or sensitive information—like names, numbers, o
 ---
 
 ## Features
-- **Context-Aware Redaction**: Uses BERT and spaCy models to understand and redact data intelligently.
+- **Context-Aware Redaction**: Uses BERT and Gliner Model models to understand and redact data intelligently.
 - **Strong Security**: Implements TLS encryption to keep your data safe.
 - **Flexible Controls**: Customize how you redact data to fit your needs.
 - **Realistic Data Anonymization**: Creates synthetic data that looks real but keeps your information private.
