@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Automated Redaction Project
+This project provides a web application for automated document redaction. It features a frontend built with Next.js and a backend server component to handle the redaction logic and data management.
 
-## Getting Started
+Table of Contents
+Tech Stack
+Folder Structure
+Prerequisites
+Getting Started
+Cloning the Repository
+Installing Dependencies
+Environment Variables
+Database Setup
+Running the Application
+Development Mode
+Production Build
+Available Scripts
+Tech Stack
+Framework: Next.js
+Language: TypeScript
+Styling: Tailwind CSS
+UI Components: Likely shadcn/ui (inferred from components.json)
+Backend Server: Custom Node.js and Flask server (likely Express.js, inferred from the server directory and commit messages)
+Linting: ESLint
+Package Manager: npm
+Folder Structure
+.
 
-First, run the development server:
+├── public/            # Static assets served by Next.js
+├── server/            # Custom backend server code (e.g., Express.js API)
+├── src/               # Next.js application source code (pages, components, styles, utils)
+├── .eslintrc.json     # ESLint configuration
+├── .gitignore         # Git ignore rules
+├── components.json    # Configuration for UI components (likely shadcn/ui)
+├── new2.pdf           # Example/Test PDF document
+├── next.config.ts     # Next.js configuration
+├── package-lock.json  # Exact dependency versions
+├── package.json       # Project metadata and dependencies
+├── postcss.config.mjs # PostCSS configuration (for Tailwind CSS)
+├── tailwind.config.ts # Tailwind CSS configuration
+└── tsconfig.json      # TypeScript configuration
+Prerequisites
+Before you begin, ensure you have the following installed:
 
-```bash
+Node.js (Version 18.x or later recommended)
+npm (Comes bundled with Node.js)
+
+Getting Started
+Follow these steps to set up the project locally.
+
+1. Cloning the Repository
+Bash
+
+git clone <your-repository-url>
+cd <repository-directory-name>
+Replace <your-repository-url> with the actual URL of your Git repository and <repository-directory-name> with the name of the folder created after cloning.
+
+2. Installing Dependencies
+Install the project dependencies using npm:
+
+Bash
+
+npm install
+3. Environment Variables
+This project requires environment variables for configuration, particularly for the database connection and potentially other API keys or secrets.
+
+Create a .env file in the root of the project directory.
+
+Add the necessary environment variables. You'll likely need at least:
+
+Code snippet
+
+# Example .env file
+DATABASE_URL="your_database_connection_string"
+
+# Add any other required variables for the backend server or Next.js
+# NEXT_PUBLIC_API_ENDPOINT=...
+# SECRET_KEY=...
+Replace "your_database_connection_string" with your actual database URL. Consult the prisma/schema.prisma file and server code (server/) for other required variables.
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This command should typically start both the Next.js frontend and the custom backend server (depending on how the dev script is configured in package.json).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open your browser and navigate to http://localhost:3000 (or the port specified in your configuration/console output).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Production Build
+To build the application for production:
+npm run build
+To run the production build:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Bash
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm start
