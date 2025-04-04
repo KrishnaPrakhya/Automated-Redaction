@@ -1,92 +1,123 @@
-Automated Redaction Project
-This project provides a web application for automated document redaction. It features a frontend built with Next.js and a backend server component to handle the redaction logic and data management.
+# Automated Redaction
 
-Table of Contents
-Tech Stack
-Folder Structure
-Prerequisites
-Getting Started
-Cloning the Repository
-Installing Dependencies
-Environment Variables
-Database Setup
-Running the Application
-Development Mode
-Production Build
-Available Scripts
-Tech Stack
-Framework: Next.js
-Language: TypeScript
-Styling: Tailwind CSS
-UI Components: Likely shadcn/ui (inferred from components.json)
-Backend Server: Custom Node.js and Flask server (likely Express.js, inferred from the server directory and commit messages)
-Linting: ESLint
-Package Manager: npm
-Folder Structure
-.
+**Protect Your Data, Keep It Simple**  
+This project is a smart tool that hides sensitive information in your documents, keeps the data structure intact, and secures it with strong encryption. Using AI technologies like BERT and spaCy, it creates realistic synthetic data while offering an easy-to-use interface for both online and offline use. Whether you're an individual or a business, Automated Redaction ensures your data stays private without the hassle.
 
-├── public/            # Static assets served by Next.js
-├── server/            # Custom backend server code (e.g., Express.js API)
-├── src/               # Next.js application source code (pages, components, styles, utils)
-├── .eslintrc.json     # ESLint configuration
-├── .gitignore         # Git ignore rules
-├── components.json    # Configuration for UI components (likely shadcn/ui)
-├── new2.pdf           # Example/Test PDF document
-├── next.config.ts     # Next.js configuration
-├── package-lock.json  # Exact dependency versions
-├── package.json       # Project metadata and dependencies
-├── postcss.config.mjs # PostCSS configuration (for Tailwind CSS)
-├── tailwind.config.ts # Tailwind CSS configuration
-└── tsconfig.json      # TypeScript configuration
-Prerequisites
-Before you begin, ensure you have the following installed:
+---
 
-Node.js (Version 18.x or later recommended)
-npm (Comes bundled with Node.js)
+## Table of Contents
+- [What is Redaction?](#what-is-redaction)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Setup Instructions](#setup-instructions)
+- [Usage](#usage)
+- [Business Model](#business-model)
+- [Future Scope](#future-scope)
+- [Contributing](#contributing)
+- [License](#license)
 
-Getting Started
-Follow these steps to set up the project locally.
+---
 
-1. Cloning the Repository
-Bash
+## What is Redaction?
+Redaction means hiding private or sensitive information—like names, numbers, or secrets—while keeping the rest of the data usable. Think of it as blacking out parts of a page so no one can peek at what’s underneath. This tool makes this process secure and effortless.
 
-git clone <your-repository-url>
-cd <repository-directory-name>
-Replace <your-repository-url> with the actual URL of your Git repository and <repository-directory-name> with the name of the folder created after cloning.
+---
 
-2. Installing Dependencies
-Install the project dependencies using npm:
+## Features
+- **Context-Aware Redaction**: Uses BERT and spaCy models to understand and redact data intelligently.
+- **Strong Security**: Implements TLS encryption to keep your data safe.
+- **Flexible Controls**: Customize how you redact data to fit your needs.
+- **Realistic Data Anonymization**: Creates synthetic data that looks real but keeps your information private.
+- **User-Friendly Interface**: Works seamlessly online or offline with a simple design.
 
-Bash
+---
 
-npm install
-3. Environment Variables
-This project requires environment variables for configuration, particularly for the database connection and potentially other API keys or secrets.
+## Project Structure
+Here’s an overview of the repository structure:
 
-Create a .env file in the root of the project directory.
+```
+├── public/                  # Static assets (images, fonts, etc.)
+├── server/                  # Backend server code
+├── src/                     # Frontend source code
+├── .eslintrc.json           # ESLint configuration for code linting
+├── .gitignore               # Files and directories to ignore in Git
+├── README.md                # Project documentation (this file)
+├── components.json          # Component configurations
+├── new2.pdf                 # Sample PDF file (possibly for testing)
+├── next.config.ts           # Next.js configuration
+├── package-lock.json        # Dependency lock file
+├── package.json             # Project dependencies and scripts
+├── postcss.config.mjs       # PostCSS configuration
+├── tailwind.config.ts       # Tailwind CSS configuration
+├── tsconfig.json            # TypeScript configuration
+```
 
-Add the necessary environment variables. You'll likely need at least:
+---
 
-Code snippet
+## Setup Instructions
+Follow these steps to set up the project locally:
 
-# Example .env file
-DATABASE_URL="your_database_connection_string"
+1. **Clone the Repository**  
+   ```bash
+   git clone https://github.com/KrishnaPrakhya/Automated-Redaction.git
+   cd Automated-Redaction
+   ```
 
-# Add any other required variables for the backend server or Next.js
-# NEXT_PUBLIC_API_ENDPOINT=...
-# SECRET_KEY=...
-Replace "your_database_connection_string" with your actual database URL. Consult the prisma/schema.prisma file and server code (server/) for other required variables.
+2. **Install Dependencies**  
+   Ensure you have [Node.js](https://nodejs.org/) installed, then run:
+   ```bash
+   npm install
+   ```
 
-npm run dev
-This command should typically start both the Next.js frontend and the custom backend server (depending on how the dev script is configured in package.json).
+3. **Set Up Environment Variables**  
+   Create a `.env` file in the root directory and add necessary variables (e.g., API keys, database credentials). Refer to `.env.example` if available.
 
-Open your browser and navigate to http://localhost:3000 (or the port specified in your configuration/console output).
+4. **Run the Development Server**  
+   Start the Next.js app:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
 
-Production Build
-To build the application for production:
-npm run build
-To run the production build:
+5. **Run the Backend Server** (if applicable)  
+   Navigate to the `server/` directory and follow any additional setup instructions there.
 
-Bash
+---
 
-npm start
+## Usage
+1. **Access the App**: Open the app in your browser after starting the development server.
+2. **Upload a Document**: Use the web interface to upload a file (text, PDF, etc.) you want to redact.
+3. **Redact Data**: The tool will automatically detect and hide sensitive information, or you can customize the redaction settings.
+4. **Download the Result**: Save the redacted file securely as a PDF or other supported format.
+
+---
+
+## Business Model
+This project operates on a user-focused business model:
+- **Monetization**: Freemium model with tiered pricing plans and usage-based billing.
+- **Customer Acquisition**: Online marketing and easy website sign-ups.
+- **Service**: User-friendly web interface, browser extensions, and an agile development pipeline.
+- **Revenue Streams**: Recurring subscriptions for premium features and potential ad revenue.
+
+---
+
+## Future Scope
+We’re excited about the future of Automated Redaction:
+- **Smarter AI for Automation**: Advanced AI agents to automate redaction tasks.
+- **Easy Database Connection**: Seamless integration with databases and knowledge bases.
+- **Safe PDF Output**: Secure, standard PDF exports for redacted files.
+- **Scalable Cloud Setup**: Using AWS S3 for a scalable cloud infrastructure.
+- **Full Data Protection**: End-to-end security with AES and TLS encryption.
+
+---
+
+## Contributing
+We welcome contributions to this project! To get started:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/your-feature`).
+3. Make your changes and commit them (`git commit -m "Add your feature"`).
+4. Push to your branch (`git push origin feature/your-feature`).
+5. Open a pull request with a clear description of your changes.
+
+Please ensure your code follows our linting rules (see `.eslintrc.json`) and includes relevant tests.
+
