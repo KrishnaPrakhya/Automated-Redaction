@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Undo2 } from "lucide-react";
 import { cardVariants } from "./RedactionLevel2";
 interface Props {
   File: File | null;
@@ -23,7 +24,7 @@ function RedactionLevel3(props: Props) {
   const dispatch: AppDispatch = useDispatch();
   const [entityDisplay, setEntityDisplay] = useState(false);
   const { level } = useSelector((state: RootState) => state.options);
-
+  
   if (entityDisplay) {
     return <EntitySelect File={File} />;
   }

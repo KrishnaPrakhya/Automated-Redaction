@@ -1,5 +1,9 @@
 from flask import Flask, jsonify, request, json, send_from_directory, url_for
 from flask_cors import CORS
+import certifi
+import os
+
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 import fitz
 import re
 import cv2
@@ -10,48 +14,56 @@ import google.generativeai as genai
 from gliner import GLiNER
 import mimetypes
 import numpy as np
+import shutil
 import asyncio
 app = Flask(__name__)
 CORS(app)
-model = GLiNER.from_pretrained("knowledgator/modern-gliner-bi-large-v1.0")
+model = GLiNER.from_pretrained("knowledgator/gliner-multitask-large-v0.5")
 UPLOAD_FOLDER = '../public'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 labels = [
+    # Original Personal Information Entities
     "PERSON_NAME",
     "DATE_OF_BIRTH",
     "AGE",
     "GENDER",
     "NATIONALITY",
     "MARITAL_STATUS",
-    
+    "NAME",
+    "EMPLOYEE_NAME",
+    # Contact Information Entities
     "EMAIL_ADDRESS",
     "PHONE_NUMBER",
     "MOBILE_NUMBER",
     "FAX_NUMBER",
     "POSTAL_ADDRESS",
     "PERMANENT_ADDRESS",
-    
+
+    # Location Entities
     "CITY",
     "STATE",
     "COUNTRY",
     "ZIP_CODE",
     "LANDMARK",
-    
+
+    # Professional Information Entities
     "OCCUPATION",
     "JOB_TITLE",
     "EMPLOYER_NAME",
     "WORK_ADDRESS",
     "WORK_EXPERIENCE",
     "SKILLS",
-    
+
+    # Educational Information Entities
     "QUALIFICATION",
     "INSTITUTION_NAME",
     "GRADUATION_YEAR",
     "ACADEMIC_SCORE",
     "CERTIFICATION",
     "SPECIALIZATION",
-    
+
+    # Financial Information Entities
     "BANK_NAME",
     "ACCOUNT_NUMBER",
     "IFSC_CODE",
@@ -60,20 +72,23 @@ labels = [
     "TAX_ID",
     "SALARY",
     "INCOME",
-    
+
+    # Transaction Entities
     "TRANSACTION_ID",
     "TRANSACTION_DATE",
     "AMOUNT",
     "PAYMENT_METHOD",
     "CURRENCY",
     "MERCHANT_NAME",
-    
+
+    # Identification Entities
     "ID_NUMBER",
     "PASSPORT_NUMBER",
     "DRIVING_LICENSE",
     "VOTER_ID",
     "AADHAR_NUMBER",
-    
+
+    # Academic Enrollment Entities
     "ENROLLMENT_NUMBER",
     "REGISTRATION_NUMBER",
     "COURSE_NAME",
@@ -81,68 +96,169 @@ labels = [
     "SUBJECT_NAME",
     "GRADE",
     "ATTENDANCE_PERCENTAGE",
-    
+
+    # Insurance Entities
     "POLICY_NUMBER",
     "POLICY_TYPE",
     "PREMIUM_AMOUNT",
     "COVERAGE_AMOUNT",
     "EXPIRY_DATE",
-    
+
+    # Loan Entities
     "LOAN_ACCOUNT_NUMBER",
     "LOAN_TYPE",
     "LOAN_AMOUNT",
     "INTEREST_RATE",
     "EMI_AMOUNT",
-    
+
+    # Date and Time Entities
     "DATE",
     "TIME",
     "DURATION",
     "PERIOD",
-    
+
+    # Medical Entities
     "MEDICAL_RECORD_NUMBER",
     "DIAGNOSIS",
     "MEDICATION",
     "BLOOD_GROUP",
-    
+
+    # Vehicle Entities
     "VEHICLE_NUMBER",
     "CHASSIS_NUMBER",
     "ENGINE_NUMBER",
     "MODEL_NUMBER",
-    
+
+    # Organizational Entities
     "ORGANIZATION_NAME",
     "REGISTRATION_NUMBER",
     "DEPARTMENT_NAME",
     "BRANCH_NAME",
-    
+
+    # Technical Entities
     "IP_ADDRESS",
     "MAC_ADDRESS",
     "URL",
     "USERNAME",
-    
+
+    # Social Media Entities
     "SOCIAL_MEDIA_HANDLE",
     "PROFILE_ID",
     "ACCOUNT_USERNAME",
-    
+
+    # Project Entities
     "PROJECT_NAME",
     "PROJECT_ID",
     "CLIENT_NAME",
     "DEADLINE_DATE",
-    
+
+    # Event Entities
     "EVENT_NAME",
     "EVENT_DATE",
     "VENUE",
-    "ORGANIZER_NAME"
-]
-import openai
-from dotenv import load_dotenv
-load_dotenv()
-client = openai.OpenAI(
-  api_key="glhf_b4cf220f5e847c019eec846167100ff4",
-  base_url="https://glhf.chat/api/openai/v1",
-)
+    "ORGANIZER_NAME",
 
-genai.configure(api_key=os.getenv("YOUR_API_KEY"))
-model_gemini = genai.GenerativeModel('gemini-1.5-flash-8b')
+    # Additional General Entities
+    "HEIGHT",
+    "WEIGHT",
+    "RELIGION",
+    "ETHNICITY",
+    "HOBBIES",
+    "INTERESTS",
+    "LANGUAGE",
+
+    # Resume-Specific Entities
+    "CAREER_OBJECTIVE",
+    "SUMMARY",
+    "AWARD_NAME",
+    "AWARD_YEAR",
+    "INTERNSHIP_COMPANY",
+    "INTERNSHIP_DURATION",
+    "INTERNSHIP_ROLE",
+    "REFERENCE_NAME",
+    "REFERENCE_CONTACT",
+    "PORTFOLIO_LINK",
+    "PROFESSIONAL_MEMBERSHIP",
+    "VOLUNTEER_EXPERIENCE",
+    "TRAINING_PROGRAM",
+    "TRAINING_DURATION",
+    "PATENT_NAME",
+    "PATENT_NUMBER",
+    "PUBLICATION_TITLE",
+    "PUBLICATION_DATE",
+    "CONFERENCE_NAME",
+    "CONFERENCE_DATE",
+    "LICENSE_NUMBER",
+    "LICENSE_TYPE",
+    "SOFTWARE_PROFICIENCY",
+    "HARDWARE_PROFICIENCY",
+    "PROFESSIONAL_SUMMARY",
+    "WORK_SUMMARY",
+    "PROJECT_DESCRIPTION",
+    "ACHIEVEMENT",
+    "RESEARCH_TOPIC",
+    "THESIS_TITLE",
+
+    # Additional Financial Entities
+    "INVESTMENT_TYPE",
+    "INVESTMENT_AMOUNT",
+    "STOCK_TICKER",
+    "SHARE_QUANTITY",
+    "EXPENSE_CATEGORY",
+    "EXPENSE_AMOUNT",
+
+    # Legal Entities (Existing)
+    "CASE_NUMBER",
+    "COURT_NAME",
+    "LAWYER_NAME",
+    "CONTRACT_ID",
+    "CONTRACT_DATE",
+
+    # Miscellaneous Entities
+    "PRODUCT_NAME",
+    "BRAND_NAME",
+    "SERIAL_NUMBER",
+    "WARRANTY_PERIOD",
+    "CUSTOMER_ID",
+    "FEEDBACK_COMMENT",
+    "SURVEY_RESPONSE",
+    "TICKET_NUMBER",
+    "COMPLAINT_ID",
+    "RESOLUTION_DATE",
+
+    # New Entities for FIR and Legal Documents
+    "FIR_NUMBER",              # For FIR No: "0456/2025"
+    "OFFENSE_TYPE",            # For "Robbery"
+    "LEGAL_SECTION",           # For "IPC Section 392"
+    "PHYSICAL_DESCRIPTION",    # For "medium build, wearing a black hoodie and jeans"
+    "ITEM_NAME",               # For "Wallet", "ID cards"
+    "VICTIM_NAME",             # For "Mr. Ramesh Kumar" (specific to victim)
+    "ACCUSED_NAME",            # For "Rahul Sharma" (specific to accused)
+    "WITNESS_NAME",            # For "Mr. Sandeep Verma" (specific to witness)
+    "POLICE_STATION",          # For "Jubilee Hills Police Station" (more specific than ORGANIZATION_NAME)
+    "INCIDENT_DESCRIPTION",    # For the narrative of the incident
+    "SIGNATURE",               # For "(Signed)" by informant or officer
+    "OFFICER_NAME",            # For "Inspector Arjun Rao" (specific to officer)
+    "DESIGNATION",    
+             "SECTION_HEADER",          # For "About Me", "Education", "EXPERIENCE", "SKILLS"
+    "FULL_NAME",               # More specific than PERSON_NAME for resume names
+    "DEGREE_MAJOR",            # For "Major Of Art and Design"
+    "WORK_DURATION",           # For "2020 - 2023" in experience section
+    "EDUCATION_DURATION",      # For "2020 - 2023" in education section
+    "PERSONAL_SUMMARY",
+             # For "Station House Officer (SHO)" (synonym for JOB_TITLE, but more specific)
+    "CRIME_SCENE",             # For "Near Rainbow Supermarket, Jubilee Hills, Hyderabad"
+    "VEHICLE_DESCRIPTION",
+         "IPC SECTION",
+    "YEARS",
+         "AGE",
+              "LOCATION",
+                   "HEIGHT",
+                        "PHONE",
+                             "WITNESS",
+                                  "PLACE"     # For "black motorcycle"
+]
+
 
 labels_string = ", ".join(labels)
 
@@ -180,6 +296,8 @@ def entities():
 
     try:
         temp_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        # undo_path= os.path.join(UPLOAD_FOLDER, file.filename+"_undo")
+        # file.save(undo_path)
         file.save(temp_path)
 
         if is_image_file(file.filename):
@@ -201,8 +319,16 @@ def entities():
 
         entities = model.predict_entities(cleaned_text, labels, threshold=0.5)
         
-        entity_list = [{"text": entity["text"], "label": entity["label"]} 
-                      for entity in entities]
+        seen = set()
+        entity_list = []
+
+        for entity in entities:
+            key = (entity["text"], entity["label"]) 
+            if key not in seen:
+                seen.add(key)
+                entity_list.append({"text": entity["text"], "label": entity["label"]})
+
+        print(entity_list)
        
         return jsonify({
             "message": "Entities extracted successfully",
@@ -510,9 +636,73 @@ async def process_pdf_redaction(pdf_content, entities, redact_type):
                 page.apply_redactions()
         
         output_path = os.path.join(UPLOAD_FOLDER, "redacted_document.pdf")
+        
         doc.save(output_path)
         return output_path
+    
+# Add this new endpoint
+@app.route('/api/undoRedaction', methods=['POST'])
+def undo_redaction():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({"error": "File not provided"}), 400
 
+    OTHER_FOLDER = './upload'
+
+  
+
+    # For images
+    if is_image_file(file.filename):
+        redacted_path = os.path.join(UPLOAD_FOLDER, 'redacted_image.jpg')
+        new_file_path = os.path.join(OTHER_FOLDER, 'new_image.jpg')  # Source file
+
+        if os.path.exists(redacted_path):
+            os.remove(redacted_path)  # Remove existing file
+
+        if os.path.exists(new_file_path):
+            shutil.copy2(new_file_path, redacted_path)
+
+    # For PDFs
+    elif is_pdf_file(file.filename):
+        # Define the path for the redacted file (redacted_document.pdf)
+        redacted_path = os.path.join(UPLOAD_FOLDER, 'redacted_document.pdf')
+
+        # Get all files in the upload directory
+        files_in_upload = [f for f in os.listdir(OTHER_FOLDER) if os.path.isfile(os.path.join(OTHER_FOLDER, f))]
+
+        # Find the latest non-redacted file (does not contain "redacted" in the name)
+        non_redacted_files = [f for f in files_in_upload if "redacted" not in f.lower() and f.lower().endswith('.pdf')]
+        if not non_redacted_files:
+            return jsonify({"error": "No non-redacted PDF file found"}), 404
+
+        def extract_timestamp(filename):
+            match = re.match(r'(\d+)', filename)
+            if match:
+                return int(match.group(1))
+            return 0  # Fallback in case no numeric prefix is found
+        # Sort non-redacted files by timestamp (descending order to get the latest)
+        non_redacted_files.sort(key=extract_timestamp, reverse=True)
+        latest_non_redacted_file = non_redacted_files[0]  # Get the latest file based on timestamp
+
+        new_file_path = os.path.join(OTHER_FOLDER, latest_non_redacted_file)
+        print(new_file_path)
+        
+        if os.path.exists(redacted_path):
+            print("hhi")
+            os.remove(redacted_path)  # Remove existing redacted file
+
+        
+        if os.path.exists(new_file_path):
+            print("ji")
+            shutil.copy2(new_file_path, redacted_path)
+
+    else:
+        return jsonify({"error": "Unsupported file type"}), 400
+
+    return jsonify({
+        "message": "Redaction undone successfully"
+    }),200
+ 
 
 @app.route('/api/redactEntity', methods=['POST'])
 async def redact_entity():
@@ -547,102 +737,8 @@ async def redact_entity():
 
 
 
-@app.route('/api/redactAgent',methods=['POST'])
-def redact_agent():
-    entities_agent=request.get_data()
-    redact_type = request.args.get('type', 'BlackOut')
-    print(entities_agent)
-
-## Newly Added
-def get_entity_types_for_redaction_gemini(user_prompt):
-    try:
-        convo = model_gemini.start_chat(history=[])
-        gemini_prompt = prompt_template.format(allowed_entities=labels_string, user_request=user_prompt)
-        res = convo.send_message(gemini_prompt)
-        response_text = res.candidates[0].content.parts[0].text.strip()
-
-        if not response_text:
-            return []
-
-        entity_types = [entity.strip() for entity in response_text.split(',')]
-        valid_entity_types = [entity for entity in entity_types if entity in labels]
-        return valid_entity_types
-
-    except Exception as e:
-        print(f"Error during Gemini API call (concise prompt): {e}")
-        return []
 
 
-@app.route('/api/redactEntityPrompt', methods=['POST'])
-async def redact_entity_prompt():
-    print(request.files)
-    file = request.files.get('file')
-    if not file:
-        return jsonify({"error": "File not provided"}), 400
-
-
-    redact_type = request.args.get('type', 'BlackOut')
-    user_prompt = request.form.get('prompt', '') 
-
-    if not user_prompt:
-        return jsonify({"error": "No redaction prompt provided"}), 400
-
-    try:
-        temp_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(temp_path)
-
-        if is_image_file(file.filename):
-            extracted_text = extract_text_from_image(temp_path)
-        elif is_pdf_file(file.filename):
-            with open(temp_path, 'rb') as f:
-                pdf_content = f.read()
-            extracted_text = extract_text_from_pdf(pdf_content)
-        else:
-            os.remove(temp_path)
-            return jsonify({"error": "Unsupported file type"}), 400
-
-        os.remove(temp_path)
-
-        if not extracted_text:
-            return jsonify({"error": "No text could be extracted from the file"}), 400
-
-        cleaned_text = preprocess_text(extracted_text)
-
-        target_entity_types = get_entity_types_for_redaction_gemini(user_prompt)
-        print(f"Gemini identified entity types: {target_entity_types}")
-
-        all_entities = model.predict_entities(cleaned_text, labels, threshold=0.5)
-
-        filtered_entities = [
-            entity for entity in all_entities
-            if entity["label"] in target_entity_types
-        ]
-        print(f"Filtered entities for redaction: {filtered_entities}")
-
-        if is_image_file(file.filename):
-            output_path = process_image_redaction(file, filtered_entities, redact_type) 
-            redacted_url = url_for('static',
-                                    filename=f"../public/redacted_image.jpg",
-                                    _external=True)
-            return jsonify({
-                "message": "Image redacted successfully",
-                "redacted_file_url": redacted_url
-            }), 200
-
-        elif is_pdf_file(file.filename):
-            file.seek(0)
-            pdf_content = file.read()
-            output_path = await process_pdf_redaction(pdf_content, filtered_entities, redact_type)
-            print("hiiii")
-            return jsonify({
-                "message": "PDF redacted successfully",
-                "output_file": os.path.basename(output_path)
-            }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": f"Error processing file: {str(e)}"
-        }), 500
 
 
 

@@ -35,10 +35,12 @@ export const entitySlice=createSlice({
     removeEntity:(state,action:PayloadAction<string>)=>{
       state.entitiesSelected=state.entitiesSelected.filter((item)=>(item.text!==action.payload))
     },
-    
+    clearEntities: (state) => {
+      state.entitiesSelected = [];
+    },
   }
 
 })
-export const {addEntity,removeEntity}=entitySlice.actions
+export const {addEntity,removeEntity,clearEntities}=entitySlice.actions
 
 export default entitySlice.reducer

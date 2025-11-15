@@ -31,7 +31,7 @@ const UnetModel = () => {
       }
     },
   });
-
+  const ngrok = "https://4e50-35-185-228-57.ngrok-free.app/";
   const handleRedact = async () => {
     if (!image) {
       setError("Please upload an image first.");
@@ -45,17 +45,14 @@ const UnetModel = () => {
     formData.append("image", image);
 
     try {
-      const response = await fetch(
-        "https://eca2-35-185-23-159.ngrok-free.app/predict",
-        {
-          method: "POST",
-          body: formData,
-          cache: "no-cache",
-        }
-      );
+      const response = await fetch(`${ngrok}/predict`, {
+        method: "POST",
+        body: formData,
+        cache: "no-cache",
+      });
       const data = await response.json();
       const timestamp = new Date().getTime();
-      const redactedImageUrl = `https://eca2-35-185-23-159.ngrok-free.app/${data?.redacted_image_path}?t=${timestamp}`;
+      const redactedImageUrl = `${ngrok}/${data?.redacted_image_path}?t=${timestamp}`;
       setRedactedImage(redactedImageUrl);
       setImageKey((prev) => prev + 1);
     } catch (err) {
@@ -68,13 +65,10 @@ const UnetModel = () => {
 
   return (
     <div className="min-h-screen max-w-full bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-6xl font-bold  gradient-title tracking-tighter mb-5">
-        Unet Model
-      </h1>
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-900">
-            Image Segmentation
+            Financial Redaction
           </CardTitle>
           <CardDescription className="mt-2 text-gray-600">
             Upload an image to apply advanced segmentation and redaction

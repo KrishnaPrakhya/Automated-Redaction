@@ -14,9 +14,9 @@ function Header() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/gradationalRedaction", label: "Gradational Redaction" },
-    { href: "/unet", label: "Image Segmentation" },
+    { href: "/unet", label: "Financial Redaction" },
     { href: "/recentFiles", label: "Recent Files" },
-    { href: "/chatbot", label: "Chat Bot" },
+    // { href: "/chatbot", label: "Chat Bot" },
     { href: "/about", label: "About Us" },
   ];
 
@@ -44,10 +44,10 @@ function Header() {
             className="flex-shrink-0 flex items-center"
           >
             <Link
-              href="/"
+              href="/landingPage"
               className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent"
             >
-              AnonymizeIT
+              AutoRedact
             </Link>
           </motion.div>
 

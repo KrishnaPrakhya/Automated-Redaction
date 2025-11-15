@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/Button";
-import { addEntity, removeEntity } from "@/features/entities/EntitySlice";
+import {
+  addEntity,
+  removeEntity,
+  clearEntities,
+} from "@/features/entities/EntitySlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +13,8 @@ import {
 } from "@/features/progress/ProgressSlice";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { Undo2 } from "lucide-react";
+
 interface Props {
   File: File | null;
 }
@@ -22,14 +28,17 @@ function EntitySelect(props: Props) {
     (state: RootState) => state.ProgressSlice
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false); // State for undo animation
   const { entitiesSelected } = useSelector((state: RootState) => state.entity);
   const { File } = props;
+  console.log("File", File);
 
   const redactSelectedEntities = async () => {
     try {
       setIsLoading(true);
       dispatch(setRedactStatus(false));
       const formData = new FormData();
+
       if (File) {
         formData.append("file", File);
         formData.append("title", File.name);
@@ -94,6 +103,59 @@ function EntitySelect(props: Props) {
     }
   };
 
+  const handleUndo = async () => {
+    try {
+      setIsUndoing(true); // Start the undo animation
+      // Clear all selected entities from Redux state
+      dispatch(clearEntities());
+
+      // Reset progress and redact status
+      dispatch(setProgressNum(0));
+      dispatch(setRedactStatus(false));
+
+      // Perform the undo redaction API call
+      const formData = new FormData();
+      if (File) {
+        formData.append("file", File);
+        formData.append("title", File.name);
+      }
+      const response = await fetch(`http://127.0.0.1:5000/api/undoRedaction`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to undo redaction");
+      }
+
+      // Fetch the updated document after undoing redaction
+      const redacted = await fetch("/redacted_document.pdf");
+      const pdfBlob = await redacted.blob();
+      formData.append("redacted", pdfBlob, "redacted.pdf");
+
+      // Upload the updated document to the server
+      const result = await axios.post(
+        "http://localhost:4000/uploadFiles",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Undo result:", result);
+
+      // Update the Redux state to reflect the undone state
+      dispatch(setRedactStatus(true));
+      dispatch(setProgressNum(100));
+    } catch (error) {
+      console.error("Error undoing redaction:", error);
+      dispatch(setRedactStatus(false));
+    } finally {
+      setIsUndoing(false); // Stop the undo animation
+    }
+  };
+
   return (
     <div>
       <ul>
@@ -127,9 +189,46 @@ function EntitySelect(props: Props) {
           );
         })}
       </ul>
-
+      <div className="p-4 border-t border-slate-200">
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleUndo}
+          disabled={isUndoing}
+        >
+          {isUndoing ? (
+            <div className="flex items-center space-x-2">
+              <motion.div
+                className="w-4 h-4 rounded-full bg-blue-500"
+                animate={{
+                  scale: [1, 0.8, 1],
+                  opacity: [1, 0.5, 1],
+                }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <span>Undoing...</span>
+            </div>
+          ) : (
+            <>
+              <Undo2 className="w-4 h-4" />
+              Undo Redaction
+            </>
+          )}
+        </Button>
+      </div>
       {progressNum === 100 && redactStatus ? (
-        <p className="text-xl font-semibold">Saved to your file directory.</p>
+        <motion.p
+          className="text-xl font-semibold text-green-600"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Saved to your file directory.
+        </motion.p>
       ) : (
         <div className="relative">
           <Button

@@ -18,12 +18,12 @@ function AboutUs() {
       level: "Level 2",
       title: "Category Replacement",
       description:
-        "Advanced pattern recognition for complex data types including financial records, medical information, and detailed personal records.",
+        "Entities which are detected by the NER model are replaced with the corresponding categories ensuring user privacy.",
     },
     {
       icon: <FileText className="w-8 h-8" />,
       level: "Level 3",
-      title: "Maximum Protection",
+      title: "Synthetic Generation",
       description:
         "Comprehensive security with context-aware redaction, handling classified information and highly sensitive organizational data.",
     },
